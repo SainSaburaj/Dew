@@ -208,10 +208,15 @@
 
                         <!-- Display Issued/Loss Data -->
                         <div class="bg-blue-50 p-2 rounded mb-2">
-                            <p class="text-[10px] font-semibold text-gray-700">Issued Quantity: <span class="text-green-600">{{ roundToTwo(dept.issued_quantity || 0) }}</span></p>
-                            <p class="text-[10px] font-semibold text-gray-700">Loss Quantity: <span class="text-red-600">{{ roundToTwo(dept.loss_quantity || 0) }}</span></p>
-                            <p class="text-[10px] font-semibold text-gray-700">Issued Pieces: <span class="text-green-600">{{ dept.issued_pieces_count || 0 }}</span></p>
-                            <p class="text-[10px] font-semibold text-gray-700">Loss Pieces: <span class="text-red-600">{{ dept.loss_pieces_count || 0 }}</span></p>
+                            <p class="text-[10px] font-semibold text-gray-700">Gold Issued Quantity: <span class="text-green-600">{{ roundToTwo(dept.issued_quantity_gold || 0) }}</span></p>
+                            <p class="text-[10px] font-semibold text-gray-700">Gold Loss Quantity: <span class="text-red-600">{{ roundToTwo(dept.loss_quantity_gold || 0) }}</span></p>
+                        </div>
+
+                        <div class="bg-purple-50 p-2 rounded mb-2">
+                            <p class="text-[10px] font-semibold text-gray-700">Diamond Issued Quantity: <span class="text-green-600">{{ roundToTwo(dept.issued_quantity_diamond || 0) }}</span></p>
+                            <p class="text-[10px] font-semibold text-gray-700">Diamond Loss Quantity: <span class="text-red-600">{{ roundToTwo(dept.loss_quantity_diamond || 0) }}</span></p>
+                            <p class="text-[10px] font-semibold text-gray-700">Diamond Issued Pieces: <span class="text-green-600">{{ roundToTwo(dept.issued_pieces_diamond || 0) }}</span></p>
+                            <p class="text-[10px] font-semibold text-gray-700">Diamond Loss Pieces: <span class="text-red-600">{{ roundToTwo(dept.loss_pieces_diamond || 0) }}</span></p>
                         </div>
 
                         <div class="text-[11px] font-semibold w-full text-center bg-gray-100 rounded p-1 mb-1">Issued & Loss Quantity</div>
@@ -1558,11 +1563,7 @@ export default {
                         console.log(`\nLocation ${locId}: ${locData.location_name}`);
                         console.log('  Departments:');
                         Object.entries(locData.departments || {}).forEach(([deptId, dept]) => {
-                            console.log(`    - ID: ${deptId}, Name: ${dept.department_name}`);
-                            console.log(`      Issued Quantity: ${dept.issued_quantity || 0}`);
-                            console.log(`      Loss Quantity: ${dept.loss_quantity || 0}`);
-                            console.log(`      Issued Pieces: ${dept.issued_pieces_count || 0}`);
-                            console.log(`      Loss Pieces: ${dept.loss_pieces_count || 0}`);
+                            console.log(`    - ID: ${deptId}, Name: ${dept.department_name}, Gold Issued: ${dept.issued_quantity_gold || 0}, Gold Loss: ${dept.loss_quantity_gold || 0}, Diamond Issued: ${dept.issued_quantity_diamond || 0}, Diamond Loss: ${dept.loss_quantity_diamond || 0}, Diamond Pieces Issued: ${dept.issued_pieces_diamond || 0}, Diamond Pieces Loss: ${dept.loss_pieces_diamond || 0}`);
                         });
                     });
                     console.log('================================\n');
@@ -1619,10 +1620,12 @@ export default {
                                     loss_diamond_pieces: dept.loss_diamond_pieces,
                                     production_diamond_pieces: dept.production_diamond_pieces,
                                     totalWeightGold: roundToTwo(totalEmployeeRecoveryWeight), // ✅ Now only from its employees
-                                    issued_quantity: dept.issued_quantity || 0,
-                                    loss_quantity: dept.loss_quantity || 0,
-                                    issued_pieces_count: dept.issued_pieces_count || 0,
-                                    loss_pieces_count: dept.loss_pieces_count || 0,
+                                    issued_quantity_gold: dept.issued_quantity_gold || 0,
+                                    loss_quantity_gold: dept.loss_quantity_gold || 0,
+                                    issued_quantity_diamond: dept.issued_quantity_diamond || 0,
+                                    loss_quantity_diamond: dept.loss_quantity_diamond || 0,
+                                    issued_pieces_diamond: dept.issued_pieces_diamond || 0,
+                                    loss_pieces_diamond: dept.loss_pieces_diamond || 0,
                                     employees: Object.entries(dept.employees || {}).map(([empId, emp]) => {
                                         const key = `${deptId}_${empId}`;
                                         const goldRecoveryWeight = employeeQuantities[key] || 0;
@@ -1679,10 +1682,12 @@ export default {
                                     loss_diamond_pieces: dept.loss_diamond_pieces,
                                     production_diamond_pieces: dept.production_diamond_pieces,
                                     totalWeightGold: roundToTwo(totalEmployeeRecoveryWeight), // ✅ Now only from its employees
-                                    issued_quantity: dept.issued_quantity || 0,
-                                    loss_quantity: dept.loss_quantity || 0,
-                                    issued_pieces_count: dept.issued_pieces_count || 0,
-                                    loss_pieces_count: dept.loss_pieces_count || 0,
+                                    issued_quantity_gold: dept.issued_quantity_gold || 0,
+                                    loss_quantity_gold: dept.loss_quantity_gold || 0,
+                                    issued_quantity_diamond: dept.issued_quantity_diamond || 0,
+                                    loss_quantity_diamond: dept.loss_quantity_diamond || 0,
+                                    issued_pieces_diamond: dept.issued_pieces_diamond || 0,
+                                    loss_pieces_diamond: dept.loss_pieces_diamond || 0,
                                     employees: Object.entries(dept.employees || {}).map(([empId, emp]) => {
                                         const key = `${deptId}_${empId}`;
                                         const goldRecoveryWeight = employeeQuantities[key] || 0;

@@ -8725,11 +8725,56 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
 
                         BUILTIN_RESULT.TYPE_INTEGER(item.class) AS item_class,
 
-                        /* Raw Direct Issue/Return Fields */
-                        BUILTIN_RESULT.TYPE_FLOAT(dir.custrecord_jj_dir_issued_pieces_info) AS dir_issued_pieces,
-                        BUILTIN_RESULT.TYPE_FLOAT(dir.custrecord_jj_issued_quantity) AS dir_issued_quantity,
-                        BUILTIN_RESULT.TYPE_FLOAT(dir.custrecord_jj_dir_loss_pieces_info) AS dir_loss_pieces,
-                        BUILTIN_RESULT.TYPE_FLOAT(dir.custrecord_jj_dir_loss_quantity) AS dir_loss_quantity,
+                        /* Raw Direct Issue/Return Fields - Separated by Class */
+                        /* GOLD - Raw Issued/Loss Quantities (no pieces for gold) */
+                        BUILTIN_RESULT.TYPE_FLOAT(
+                            CASE 
+                                WHEN item.class IN (${GOLD_CLASS_IDS.join(',')}) THEN
+                                    NVL(dir.custrecord_jj_issued_quantity, 0)
+                                ELSE 0
+                            END
+                        ) AS dir_issued_quantity_gold,
+
+                        BUILTIN_RESULT.TYPE_FLOAT(
+                            CASE 
+                                WHEN item.class IN (${GOLD_CLASS_IDS.join(',')}) THEN
+                                    NVL(dir.custrecord_jj_dir_loss_quantity, 0)
+                                ELSE 0
+                            END
+                        ) AS dir_loss_quantity_gold,
+
+                        /* DIAMOND - Raw Issued/Loss Quantities and Pieces */
+                        BUILTIN_RESULT.TYPE_FLOAT(
+                            CASE 
+                                WHEN item.class = ${DIAMOND_ID} THEN
+                                    NVL(dir.custrecord_jj_issued_quantity, 0)
+                                ELSE 0
+                            END
+                        ) AS dir_issued_quantity_diamond,
+
+                        BUILTIN_RESULT.TYPE_FLOAT(
+                            CASE 
+                                WHEN item.class = ${DIAMOND_ID} THEN
+                                    NVL(dir.custrecord_jj_dir_loss_quantity, 0)
+                                ELSE 0
+                            END
+                        ) AS dir_loss_quantity_diamond,
+
+                        BUILTIN_RESULT.TYPE_FLOAT(
+                            CASE 
+                                WHEN item.class = ${DIAMOND_ID} THEN
+                                    NVL(dir.custrecord_jj_dir_issued_pieces_info, 0)
+                                ELSE 0
+                            END
+                        ) AS dir_issued_pieces_diamond,
+
+                        BUILTIN_RESULT.TYPE_FLOAT(
+                            CASE 
+                                WHEN item.class = ${DIAMOND_ID} THEN
+                                    NVL(dir.custrecord_jj_dir_loss_pieces_info, 0)
+                                ELSE 0
+                            END
+                        ) AS dir_loss_pieces_diamond,
 
                         /* GOLD - Quantity in grams */
                         BUILTIN_RESULT.TYPE_FLOAT(
@@ -8875,11 +8920,14 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                     const diaLossPieces = parseFloat(record.loss_diamond_pieces || 0);
                     const isRepair = record.is_repair === true || record.is_repair === 'T';
 
-                    // Raw direct issue/return fields
-                    const dirIssuedPieces = parseFloat(record.dir_issued_pieces || 0);
-                    const dirIssuedQuantity = parseFloat(record.dir_issued_quantity || 0);
-                    const dirLossPieces = parseFloat(record.dir_loss_pieces || 0);
-                    const dirLossQuantity = parseFloat(record.dir_loss_quantity || 0);
+                    // Raw direct issue/return fields - separated by class
+                    const dirIssuedQuantityGold = parseFloat(record.dir_issued_quantity_gold || 0);
+                    const dirLossQuantityGold = parseFloat(record.dir_loss_quantity_gold || 0);
+
+                    const dirIssuedQuantityDiamond = parseFloat(record.dir_issued_quantity_diamond || 0);
+                    const dirLossQuantityDiamond = parseFloat(record.dir_loss_quantity_diamond || 0);
+                    const dirIssuedPiecesDiamond = parseFloat(record.dir_issued_pieces_diamond || 0);
+                    const dirLossPiecesDiamond = parseFloat(record.dir_loss_pieces_diamond || 0);
 
                     /* LOCATION INIT */
                     if (!acc[locationId]) {
@@ -8905,10 +8953,12 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                             loss_diamond: 0,
                             production_diamond_pieces: 0,
                             loss_diamond_pieces: 0,
-                            issued_quantity: 0,
-                            loss_quantity: 0,
-                            issued_pieces_count: 0,
-                            loss_pieces_count: 0,
+                            issued_quantity_gold: 0,
+                            loss_quantity_gold: 0,
+                            issued_quantity_diamond: 0,
+                            loss_quantity_diamond: 0,
+                            issued_pieces_diamond: 0,
+                            loss_pieces_diamond: 0,
                             employees: {}
                         };
                     }
@@ -8958,10 +9008,15 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                     dept.loss_diamond += diaLossCarats;
                     dept.production_diamond_pieces += diaProdPieces;
                     dept.loss_diamond_pieces += diaLossPieces;
-                    dept.issued_quantity += dirIssuedQuantity;
-                    dept.loss_quantity += dirLossQuantity;
-                    dept.issued_pieces_count += dirIssuedPieces;
-                    dept.loss_pieces_count += dirLossPieces;
+                    
+                    // Raw quantities separated by class (no pieces for gold)
+                    dept.issued_quantity_gold += dirIssuedQuantityGold;
+                    dept.loss_quantity_gold += dirLossQuantityGold;
+                    
+                    dept.issued_quantity_diamond += dirIssuedQuantityDiamond;
+                    dept.loss_quantity_diamond += dirLossQuantityDiamond;
+                    dept.issued_pieces_diamond += dirIssuedPiecesDiamond;
+                    dept.loss_pieces_diamond += dirLossPiecesDiamond;
 
                     /* LOCATION TOTALS */
                     loc.tmproduction_gold += goldProd;
