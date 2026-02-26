@@ -206,17 +206,9 @@
                     <div class="flex-1 pl-2 pr-2 py-2 bg-white rounded-r-lg border-2 border-white shadow-md">
                         <p class="text-sm font-semibold text-gray-700 mb-2">{{ dept.name }}</p>
 
-                        <!-- Display Issued/Loss Data -->
-                        <div class="bg-blue-50 p-2 rounded mb-2">
-                            <p class="text-[10px] font-semibold text-gray-700">Gold Issued Quantity: <span class="text-green-600">{{ roundToTwo(dept.issued_quantity_gold || 0) }}</span></p>
-                            <p class="text-[10px] font-semibold text-gray-700">Gold Loss Quantity: <span class="text-red-600">{{ roundToTwo(dept.loss_quantity_gold || 0) }}</span></p>
-                        </div>
-
-                        <div class="bg-purple-50 p-2 rounded mb-2">
-                            <p class="text-[10px] font-semibold text-gray-700">Diamond Issued Quantity: <span class="text-green-600">{{ roundToTwo(dept.issued_quantity_diamond || 0) }}</span></p>
-                            <p class="text-[10px] font-semibold text-gray-700">Diamond Loss Quantity: <span class="text-red-600">{{ roundToTwo(dept.loss_quantity_diamond || 0) }}</span></p>
-                            <p class="text-[10px] font-semibold text-gray-700">Diamond Issued Pieces: <span class="text-green-600">{{ roundToTwo(dept.issued_pieces_diamond || 0) }}</span></p>
-                            <p class="text-[10px] font-semibold text-gray-700">Diamond Loss Pieces: <span class="text-red-600">{{ roundToTwo(dept.loss_pieces_diamond || 0) }}</span></p>
+                        <!-- Bag Count -->
+                        <div class="bg-green-50 p-1 rounded mb-2 text-center">
+                            <p class="text-[10px] font-semibold text-gray-700">No. of Bags: <span class="text-blue-600">{{ dept.bag_count || 0 }}</span></p>
                         </div>
 
                         <div class="text-[11px] font-semibold w-full text-center bg-gray-100 rounded p-1 mb-1">Issued & Loss Quantity</div>
@@ -231,11 +223,11 @@
                                 <span class="text-[11px] text-gray-700 mt-1">grams</span>
                                 <div class="flex items-center space-x-1">
                                     <i class="fas fa-arrow-up text-green-500 text-[11px]"></i>
-                                    <p class="text-green-500 text-[11px]">{{ roundToTwo(dept.production) }}</p>
+                                    <p class="text-green-500 text-[11px]">{{ roundToTwo(dept.issued_quantity_gold || 0) }}</p>
                                 </div>
                                 <div class="flex items-center space-x-1">
                                     <i class="fas fa-arrow-down text-red-500 text-[11px]"></i>
-                                    <p class="text-red-500 text-[11px]">{{ roundToTwo(dept.loss) }}</p>
+                                    <p class="text-red-500 text-[11px]">{{ roundToTwo(dept.loss_quantity_gold || 0) }}</p>
                                 </div>
                             </div>
 
@@ -251,11 +243,11 @@
                                         <span class="text-[11px] text-gray-700">carat</span>
                                         <div class="flex items-center space-x-1">
                                             <i class="fas fa-arrow-up text-green-500 text-[11px]"></i>
-                                            <p class="text-green-500 text-[11px]">{{ roundToTwo(dept.production_diamond) }}</p>
+                                            <p class="text-green-500 text-[11px]">{{ roundToTwo(dept.issued_quantity_diamond || 0) }}</p>
                                         </div>
                                         <div class="flex items-center space-x-1">
                                             <i class="fas fa-arrow-down text-red-500 text-[11px]"></i>
-                                            <p class="text-red-500 text-[11px]">{{ roundToTwo(dept.loss_diamond) }}</p>
+                                            <p class="text-red-500 text-[11px]">{{ roundToTwo(dept.loss_quantity_diamond || 0) }}</p>
                                         </div>
                                     </div>
 
@@ -264,11 +256,11 @@
                                         <span class="text-[11px] text-gray-700">pieces</span>
                                         <div class="flex items-center space-x-1">
                                             <i class="fas fa-arrow-up text-green-500 text-[11px]"></i>
-                                            <p class="text-green-500 text-[11px]">{{ roundToTwo(dept.production_diamond_pieces) }}</p>
+                                            <p class="text-green-500 text-[11px]">{{ roundToTwo(dept.issued_pieces_diamond || 0) }}</p>
                                         </div>
                                         <div class="flex items-center space-x-1">
                                             <i class="fas fa-arrow-down text-red-500 text-[11px]"></i>
-                                            <p class="text-red-500 text-[11px]">{{ roundToTwo(dept.loss_diamond_pieces) }}</p>
+                                            <p class="text-red-500 text-[11px]">{{ roundToTwo(dept.loss_pieces_diamond || 0) }}</p>
                                         </div>
                                     </div>
                                 </div>
@@ -466,7 +458,7 @@
                                     <td class="px-3 py-2 group-hover:!bg-white">{{ dept.name }}</td>
                                     
                                     <!-- No. of Bags -->
-                                    <td class="px-3 py-2 font-semibold text-center bg-blue-50">{{ dept.bagCount || 0 }}</td>
+                                    <td class="px-3 py-2 font-semibold text-center bg-blue-50">{{ dept.bag_count || 0 }}</td>
                                     
                                     <!-- Item Category -->
                                     <td class="px-3 py-2 group-hover:shadow-md"></td>
@@ -1626,6 +1618,7 @@ export default {
                                     loss_quantity_diamond: dept.loss_quantity_diamond || 0,
                                     issued_pieces_diamond: dept.issued_pieces_diamond || 0,
                                     loss_pieces_diamond: dept.loss_pieces_diamond || 0,
+                                    bag_count: dept.bag_count || 0,
                                     employees: Object.entries(dept.employees || {}).map(([empId, emp]) => {
                                         const key = `${deptId}_${empId}`;
                                         const goldRecoveryWeight = employeeQuantities[key] || 0;
@@ -1688,6 +1681,7 @@ export default {
                                     loss_quantity_diamond: dept.loss_quantity_diamond || 0,
                                     issued_pieces_diamond: dept.issued_pieces_diamond || 0,
                                     loss_pieces_diamond: dept.loss_pieces_diamond || 0,
+                                    bag_count: dept.bag_count || 0,
                                     employees: Object.entries(dept.employees || {}).map(([empId, emp]) => {
                                         const key = `${deptId}_${empId}`;
                                         const goldRecoveryWeight = employeeQuantities[key] || 0;

@@ -39,8 +39,8 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
         const CACHE_KEY = 'item_list'; // Cache key
         const CACHE_NAME = 'item_cache'; // Cache name
         const DIAMOND_ID = 6;
-        const METAL_ARRAY_GOLD = [4609, 8410, 8411]; // G18, G22, G994
-        // const METAL_ARRAY_GOLD = [22327, 22328, 22329, 28612]; // [G18, G22, G994, G14]
+        // const METAL_ARRAY_GOLD = [4609, 8410, 8411]; // G18, G22, G994
+        const METAL_ARRAY_GOLD = [22327, 22328, 22329, 28612]; // [G18, G22, G994, G14]
         const BARCODING_AND_FG_DEPT_ID = 24;
         const PAGE_SIZE = 10; // Number of records per page
         const OPERATION_STATUS_IN_TRANSIT = 2;
@@ -62,7 +62,7 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
         const GOLD_CLASS_IDS = [5, 22, 23, 24, 25]; // [Gold, Gold Bullion, Gold Findings, Gold Mountings, Gold Back Chain]
         const GOLD_SCRAP_ITEM_LOT_NAME = "Scrap_Gold";
         const GOLD_SCRAP_ITEM_ID = 9321; // Internal id of the item "Scrap"
-        const SCRAP_ITEM_PARENT_ID = 25092; // Parent internal id for scrap items
+        const SCRAP_ITEM_PARENT_ID = 37469; // Parent internal id for scrap items
         const CURRENCY_INR_ID = 1;
         const JEWELRY_TYPE_ID = 8;
         const CARATS_TO_GRAMS_CONST = 0.2;
@@ -2607,7 +2607,7 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                         filters: filters,
                         columns:
                             [
-                                search.createColumn({ name: "custrecord_jj_bag_generation", label: "Bag Generation" })
+                                search.createColumn({ name: "custrecord_jj_bag_generation", label: "bag_generation" })
                             ]
                     });
                     let searchResultCount = customrecord_jj_direct_issue_returnSearchObj.runPaged().count;
@@ -2616,20 +2616,35 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                         return []
                     }
                     let bag_nos = [];
-                    customrecord_jj_direct_issue_returnSearchObj.run().each(function (result) {
-                        // Build the object in the required format
-                        // let obj = {
-                        //     bag_no: {
-                        //         value: result.getValue({ name: "custrecord_jj_bag_generation" }),
-                        //         text: result.getText({ name: "custrecord_jj_bag_generation" })
-                        //     },
-                        // };
-                        bag_nos.push(result.getValue({ name: "custrecord_jj_bag_generation" }));
 
-                        // Add the object to the results array
-                        // bag_nos.push(obj);
-                        return true; // Continue iteration
+                    // customrecord_jj_direct_issue_returnSearchObj.run().each(function (result) {
+                    //     // Build the object in the required format
+                    //     // let obj = {
+                    //     //     bag_no: {
+                    //     //         value: result.getValue({ name: "custrecord_jj_bag_generation" }),
+                    //     //         text: result.getText({ name: "custrecord_jj_bag_generation" })
+                    //     //     },
+                    //     // };
+                    //     bag_nos.push(result.getValue({ name: "custrecord_jj_bag_generation" }));
+
+                    //     // Add the object to the results array
+                    //     // bag_nos.push(obj);
+                    //     return true; // Continue iteration
+                    // });
+
+                    let searchResult = jjUtil.dataSets.iterateSavedSearch({
+                        searchObj: customrecord_jj_direct_issue_returnSearchObj,
+                        columns: jjUtil.dataSets.fetchSavedSearchColumn(customrecord_jj_direct_issue_returnSearchObj, 'label'),
+                        PAGE_INDEX: null,
+                        PAGE_SIZE: 1000
                     });
+
+                    searchResult.forEach((result) => {
+                        if (result.bag_generation?.value) {
+                            bag_nos.push(result.bag_generation?.value);
+                        }
+                    });
+
                     return bag_nos;
 
                 } catch (e) {
@@ -8250,7 +8265,7 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                             AND (
                                 (
                                     NVL(item.isinactive, 'F') = 'F' 
-                                    AND item.itemtype IN ('InvtPart') 
+                                    AND item.itemtype IN ('InvtPart', 'Assembly') 
                                     AND item.ID IN (${materialId})
                                 )
                             )
@@ -8724,6 +8739,8 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                         BUILTIN_RESULT.TYPE_STRING(emp.lastname) AS lastname,
 
                         BUILTIN_RESULT.TYPE_INTEGER(item.class) AS item_class,
+                        
+                        BUILTIN_RESULT.TYPE_STRING(bag.name) AS bag_name,
 
                         /* Raw Direct Issue/Return Fields - Separated by Class */
                         /* GOLD - Raw Issued/Loss Quantities (no pieces for gold) */
@@ -8869,6 +8886,9 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                     LEFT JOIN employee emp
                         ON op.custrecord_jj_oprtns_employee = emp.ID
 
+                    LEFT JOIN CUSTOMRECORD_JJ_BAG_GENERATION bag
+                        ON op.custrecord_jj_oprtns_bagno = bag.ID
+
                     WHERE
                         NVL(op.isinactive, 'F') = 'F'
                         AND NVL(emp.isinactive, 'F') = 'F'
@@ -8906,6 +8926,7 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                     const locationId = record.location_id;
                     const departmentId = record.department_id;
                     const employeeId = record.employee_id;
+                    const bagName = record.bag_name;
 
                     // Skip only if location or department is missing (employee can be null)
                     if (!locationId || !departmentId) {
@@ -8959,8 +8980,14 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                             loss_quantity_diamond: 0,
                             issued_pieces_diamond: 0,
                             loss_pieces_diamond: 0,
+                            unique_bags: new Set(),
                             employees: {}
                         };
+                    }
+
+                    // Track unique bags per department
+                    if (bagName) {
+                        acc[locationId].departments[departmentId].unique_bags.add(bagName);
                     }
 
                     // Only process employee data if employeeId exists
@@ -9028,6 +9055,15 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                     return acc;
 
                 }, {});
+
+                // Convert Set to count for bag_count
+                Object.keys(groupedData).forEach(locationId => {
+                    Object.keys(groupedData[locationId].departments).forEach(deptId => {
+                        const dept = groupedData[locationId].departments[deptId];
+                        dept.bag_count = dept.unique_bags ? dept.unique_bags.size : 0;
+                        delete dept.unique_bags; // Remove the Set object
+                    });
+                });
 
                 return groupedData;
             },
