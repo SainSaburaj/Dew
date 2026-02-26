@@ -8735,7 +8735,7 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                         BUILTIN_RESULT.TYPE_FLOAT(
                             CASE 
                                 WHEN item.class IN (${GOLD_CLASS_IDS.join(',')}) THEN
-                                    NVL(dir.custrecord_jj_issued_quantity, 0) - NVL(dir.custrecord_jj_additional_quantity, 0)
+                                    NVL(dir.custrecord_jj_issued_quantity, 0)
                                 ELSE 0
                             END
                         ) AS tmproduction_gold,
@@ -8752,7 +8752,7 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                         BUILTIN_RESULT.TYPE_FLOAT(
                             CASE 
                                 WHEN item.class = ${DIAMOND_ID} THEN
-                                    NVL(dir.custrecord_jj_issued_quantity, 0) - NVL(dir.custrecord_jj_additional_quantity, 0)
+                                    NVL(dir.custrecord_jj_issued_quantity, 0)
                                 ELSE 0
                             END
                         ) AS tmproduction_diamond_carats,
@@ -8769,7 +8769,7 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                         BUILTIN_RESULT.TYPE_FLOAT(
                             CASE 
                                 WHEN item.class IN (${GOLD_CLASS_IDS.join(',')}) THEN
-                                    NVL(dir.custrecord_jj_dir_issued_pieces_info, 0) - NVL(dir.custrecord_jj_dir_balance_pieces_info, 0)
+                                    NVL(dir.custrecord_jj_dir_issued_pieces_info, 0)
                                 ELSE 0
                             END
                         ) AS tmproduction_gold_pieces,
@@ -8786,7 +8786,7 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                         BUILTIN_RESULT.TYPE_FLOAT(
                             CASE 
                                 WHEN item.class = ${DIAMOND_ID} THEN
-                                    NVL(dir.custrecord_jj_dir_issued_pieces_info, 0) - NVL(dir.custrecord_jj_dir_balance_pieces_info, 0)
+                                    NVL(dir.custrecord_jj_dir_issued_pieces_info, 0)
                                 ELSE 0
                             END
                         ) AS tmproduction_diamond_pieces,
