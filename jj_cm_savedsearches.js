@@ -8697,11 +8697,12 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
              * @returns {Object} - The grouped and cleaned efficiency data
              */
             getOverallEfficiencyData(location, startDate, endDate) {
-                // Validate that dates are provided
-                if (!startDate || !endDate) {
-                    log.debug("getOverallEfficiencyData - Missing dates, returning empty result");
-                    return {};
-                }
+                try {
+                    // Validate that dates are provided
+                    if (!startDate || !endDate) {
+                        log.debug("getOverallEfficiencyData - Missing dates, returning empty result");
+                        return {};
+                    }
 
                 // Format dates as strings for SQL query (keep original string format)
                 const formattedStartDate = startDate;
@@ -8741,6 +8742,7 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                         BUILTIN_RESULT.TYPE_INTEGER(item.class) AS item_class,
                         
                         BUILTIN_RESULT.TYPE_STRING(bag.name) AS bag_name,
+                        BUILTIN_RESULT.TYPE_STRING(BUILTIN.DF(printdesign.custitem_jj_category)) AS item_category,
 
                         /* Raw Direct Issue/Return Fields - Separated by Class */
                         /* GOLD - Raw Issued/Loss Quantities (no pieces for gold) */
@@ -8889,6 +8891,12 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                     LEFT JOIN CUSTOMRECORD_JJ_BAG_GENERATION bag
                         ON op.custrecord_jj_oprtns_bagno = bag.ID
 
+                    LEFT JOIN CUSTOMRECORD_JJ_BAG_CORE_TRACKING bagcore
+                        ON bag.custrecord_jj_baggen_bagcore = bagcore.ID
+
+                    LEFT JOIN item printdesign
+                        ON bagcore.custrecord_jj_bagcore_kt_col = printdesign.ID
+
                     WHERE
                         NVL(op.isinactive, 'F') = 'F'
                         AND NVL(emp.isinactive, 'F') = 'F'
@@ -8920,13 +8928,22 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                     `;
                 }
 
-                const rawResults = query.runSuiteQL({ query: sqlQuery }).asMappedResults();
+                let rawResults;
+                try {
+                    log.debug("getOverallEfficiencyData - Executing SQL", "Query length: " + sqlQuery.length);
+                    rawResults = query.runSuiteQL({ query: sqlQuery }).asMappedResults();
+                    log.debug("getOverallEfficiencyData - Raw results count", rawResults.length);
+                } catch (sqlError) {
+                    throw sqlError;
+                }
+                
                 const groupedData = rawResults.reduce((acc, record) => {
 
                     const locationId = record.location_id;
                     const departmentId = record.department_id;
                     const employeeId = record.employee_id;
                     const bagName = record.bag_name;
+                    const itemCategory = record.item_category;
 
                     // Skip only if location or department is missing (employee can be null)
                     if (!locationId || !departmentId) {
@@ -8981,6 +8998,8 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                             issued_pieces_diamond: 0,
                             loss_pieces_diamond: 0,
                             unique_bags: new Set(),
+                            unique_categories: new Set(),
+                            categories: {}, // Store data by category
                             employees: {}
                         };
                     }
@@ -8988,6 +9007,30 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                     // Track unique bags per department
                     if (bagName) {
                         acc[locationId].departments[departmentId].unique_bags.add(bagName);
+                    }
+
+                    // Track unique categories per department
+                    if (itemCategory) {
+                        acc[locationId].departments[departmentId].unique_categories.add(itemCategory);
+                        
+                        // Initialize category if not exists
+                        if (!acc[locationId].departments[departmentId].categories[itemCategory]) {
+                            acc[locationId].departments[departmentId].categories[itemCategory] = {
+                                category_name: itemCategory,
+                                production: 0,
+                                loss: 0,
+                                production_diamond: 0,
+                                loss_diamond: 0,
+                                production_diamond_pieces: 0,
+                                loss_diamond_pieces: 0,
+                                issued_quantity_gold: 0,
+                                loss_quantity_gold: 0,
+                                issued_quantity_diamond: 0,
+                                loss_quantity_diamond: 0,
+                                issued_pieces_diamond: 0,
+                                loss_pieces_diamond: 0
+                            };
+                        }
                     }
 
                     // Only process employee data if employeeId exists
@@ -9045,6 +9088,23 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                     dept.issued_pieces_diamond += dirIssuedPiecesDiamond;
                     dept.loss_pieces_diamond += dirLossPiecesDiamond;
 
+                    /* CATEGORY TOTALS */
+                    if (itemCategory && dept.categories[itemCategory]) {
+                        const cat = dept.categories[itemCategory];
+                        cat.production += goldProd;
+                        cat.loss += goldLoss;
+                        cat.production_diamond += diaProdCarats;
+                        cat.loss_diamond += diaLossCarats;
+                        cat.production_diamond_pieces += diaProdPieces;
+                        cat.loss_diamond_pieces += diaLossPieces;
+                        cat.issued_quantity_gold += dirIssuedQuantityGold;
+                        cat.loss_quantity_gold += dirLossQuantityGold;
+                        cat.issued_quantity_diamond += dirIssuedQuantityDiamond;
+                        cat.loss_quantity_diamond += dirLossQuantityDiamond;
+                        cat.issued_pieces_diamond += dirIssuedPiecesDiamond;
+                        cat.loss_pieces_diamond += dirLossPiecesDiamond;
+                    }
+
                     /* LOCATION TOTALS */
                     loc.tmproduction_gold += goldProd;
                     loc.loss_gold += goldLoss;
@@ -9056,16 +9116,51 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
 
                 }, {});
 
-                // Convert Set to count for bag_count
-                Object.keys(groupedData).forEach(locationId => {
-                    Object.keys(groupedData[locationId].departments).forEach(deptId => {
-                        const dept = groupedData[locationId].departments[deptId];
-                        dept.bag_count = dept.unique_bags ? dept.unique_bags.size : 0;
-                        delete dept.unique_bags; // Remove the Set object
+                // Convert Set to count for bag_count and prepare categories array
+                try {
+                    Object.keys(groupedData).forEach(locationId => {
+                        const location = groupedData[locationId];
+                        
+                        Object.keys(location.departments || {}).forEach(deptId => {
+                            const dept = location.departments[deptId];
+                            
+                            // Convert Sets to counts
+                            dept.bag_count = (dept.unique_bags && dept.unique_bags.size) ? dept.unique_bags.size : 0;
+                            dept.category_count = (dept.unique_categories && dept.unique_categories.size) ? dept.unique_categories.size : 0;
+                            
+                            // Convert categories object to array
+                            if (dept.categories && typeof dept.categories === 'object') {
+                                dept.categories_array = Object.values(dept.categories);
+                            } else {
+                                dept.categories_array = [];
+                            }
+                            
+                            // Remove non-serializable objects
+                            delete dept.unique_bags;
+                            delete dept.unique_categories;
+                            delete dept.categories;
+                        });
                     });
-                });
+                    
+                    // Test JSON serialization
+                    JSON.stringify(groupedData);
+                    
+                    log.debug("getOverallEfficiencyData - Cleanup successful", "Data cleaned and serializable");
+                    
+                } catch (e) {
+                    log.error("Error cleaning up groupedData", e.toString());
+                    log.error("Error stack", e.stack);
+                }
+
+                log.debug("getOverallEfficiencyData - Returning data", "Location count: " + Object.keys(groupedData).length);
 
                 return groupedData;
+                
+                } catch (error) {
+                    log.error("getOverallEfficiencyData - Fatal Error", error.toString());
+                    log.error("getOverallEfficiencyData - Error Stack", error.stack);
+                    throw error;
+                }
             },
 
             /**

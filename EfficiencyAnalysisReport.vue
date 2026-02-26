@@ -448,9 +448,64 @@
                         </thead>
 
                         <tbody class="text-gray-700">
-                            <!-- Department Details -->
+                            <!-- Department Details with Categories -->
                             <template v-if="!showEmployeesTable" v-for="(dept, deptIndex) in selectedDepartmentData" :key="'dept-' + deptIndex">
-                                <tr class="border-b group hover:bg-gray-50 transition-all duration-200 text-[11px]">
+                                <!-- If department has categories, show them with rowspan -->
+                                <template v-if="dept.categories && dept.categories.length > 0">
+                                    <tr v-for="(category, catIndex) in dept.categories" :key="'dept-' + deptIndex + '-cat-' + catIndex" 
+                                        class="border-b group hover:bg-gray-50 transition-all duration-200 text-[11px]">
+                                        <!-- SL No - only show on first category row -->
+                                        <td v-if="catIndex === 0" :rowspan="dept.categories.length" class="px-3 py-2 group-hover:!bg-white border-r">{{ deptIndex + 1 }}</td>
+                                        
+                                        <!-- Department Name - only show on first category row -->
+                                        <td v-if="catIndex === 0" :rowspan="dept.categories.length" class="px-3 py-2 group-hover:!bg-white border-r">{{ dept.name }}</td>
+                                        
+                                        <!-- No. of Bags - only show on first category row -->
+                                        <td v-if="catIndex === 0" :rowspan="dept.categories.length" class="px-3 py-2 font-semibold text-center bg-blue-50 border-r">{{ dept.bag_count || 0 }}</td>
+                                        
+                                        <!-- Item Category -->
+                                        <td class="px-3 py-2 bg-yellow-50 font-semibold">{{ category.category_name || 'N/A' }}</td>
+                                        
+                                        <!-- TM Production Gold -->
+                                        <td class="px-3 py-2 group-hover:shadow-md">{{ roundToTwo(category.production || 0) }}</td>
+                                        
+                                        <!-- Actual Production Gold -->
+                                        <td class="px-3 py-2 group-hover:shadow-md">{{ roundToTwo(category.actualProductionGold || 0) }}</td>
+                                        
+                                        <!-- Gross Loss Gold -->
+                                        <td class="px-3 py-2 text-red-500 group-hover:shadow-md">{{ roundToTwo(category.loss || 0) }}</td>
+                                        
+                                        <!-- Gold Loss % -->
+                                        <td class="px-3 py-2 text-red-500 group-hover:shadow-md">{{ roundToTwo(calculateGoldLossPercentage(category.actualProductionGold, category.loss)) }}%</td>
+                                        
+                                        <!-- TM Production Diamond-->
+                                        <td class="px-3 py-2 group-hover:shadow-md">{{ roundToTwo(category.production_diamond || 0) }}</td>
+                                        
+                                        <!-- Actual Production Diamond -->
+                                        <td class="px-3 py-2 group-hover:shadow-md">{{ roundToTwo(category.actualProductionDiamond || 0) }}</td>
+                                        
+                                        <!-- Gross Loss Diamond -->
+                                        <td class="px-3 py-2 text-red-500 group-hover:shadow-md">{{ roundToTwo(category.loss_diamond || 0) }}</td>
+                                        
+                                        <!-- Diamond Loss % -->
+                                        <td class="px-3 py-2 text-red-500 group-hover:shadow-md">{{ roundToTwo(calculateDiamondLossPercentage(category.actualProductionDiamond, category.loss_diamond)) }}%</td>
+                                        
+                                        <!-- Gold Recovery Weight -->
+                                        <td class="px-3 py-2 group-hover:shadow-md"></td>
+                                        
+                                        <!-- Net Loss Gold -->
+                                        <td class="px-3 py-2 text-red-500 group-hover:shadow-md"></td>
+                                        
+                                        <!-- Diamond Recovery Weight (empty) -->
+                                        <td class="px-3 py-2 group-hover:shadow-md"></td>
+                                        
+                                        <!-- Net Loss Diamond (empty) -->
+                                        <td class="px-3 py-2 group-hover:shadow-md"></td>
+                                    </tr>
+                                </template>
+                                
+                                <!-- If no categories, show department row without categories -->
+                                <tr v-else class="border-b group hover:bg-gray-50 transition-all duration-200 text-[11px]">
                                     <!-- SL No -->
                                     <td class="px-3 py-2 group-hover:!bg-white">{{ deptIndex + 1 }}</td>
                                     
@@ -461,7 +516,7 @@
                                     <td class="px-3 py-2 font-semibold text-center bg-blue-50">{{ dept.bag_count || 0 }}</td>
                                     
                                     <!-- Item Category -->
-                                    <td class="px-3 py-2 group-hover:shadow-md"></td>
+                                    <td class="px-3 py-2 group-hover:shadow-md">N/A</td>
                                     
                                     <!-- TM Production Gold -->
                                     <td class="px-3 py-2 group-hover:shadow-md">{{ roundToTwo(dept.production || 0) }}</td>
@@ -1619,6 +1674,8 @@ export default {
                                     issued_pieces_diamond: dept.issued_pieces_diamond || 0,
                                     loss_pieces_diamond: dept.loss_pieces_diamond || 0,
                                     bag_count: dept.bag_count || 0,
+                                    category_count: dept.category_count || 0,
+                                    categories: dept.categories_array || [],
                                     employees: Object.entries(dept.employees || {}).map(([empId, emp]) => {
                                         const key = `${deptId}_${empId}`;
                                         const goldRecoveryWeight = employeeQuantities[key] || 0;
@@ -1682,6 +1739,8 @@ export default {
                                     issued_pieces_diamond: dept.issued_pieces_diamond || 0,
                                     loss_pieces_diamond: dept.loss_pieces_diamond || 0,
                                     bag_count: dept.bag_count || 0,
+                                    category_count: dept.category_count || 0,
+                                    categories: dept.categories_array || [],
                                     employees: Object.entries(dept.employees || {}).map(([empId, emp]) => {
                                         const key = `${deptId}_${empId}`;
                                         const goldRecoveryWeight = employeeQuantities[key] || 0;
