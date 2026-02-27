@@ -279,7 +279,7 @@
                                 </div>
                                 <div class="flex items-center space-x-1">
                                     <i class="fas fa-arrow-up text-green-500 text-[11px]"></i>
-                                    <p class="text-green-500 text-[11px]">{{ roundToTwo(dept.actualProductionGold || 0) }}</p>
+                                    <p class="text-green-500 text-[11px]">{{ roundToTwo(dept.actual_production_gold || 0) }}</p>
                                 </div>
                                 <div class="flex items-center space-x-1">
                                     <i class="fas fa-arrow-down text-red-500 text-[11px]"></i>
@@ -295,7 +295,7 @@
                                 </div>
                                 <div class="flex items-center space-x-1">
                                     <i class="fas fa-arrow-up text-green-500 text-[11px]"></i>
-                                    <p class="text-green-500 text-[11px]">{{ roundToTwo(dept.actualProductionDiamond || 0) }}</p>
+                                    <p class="text-green-500 text-[11px]">{{ roundToTwo(dept.actual_production_diamond || 0) }}</p>
                                 </div>
                                 <div class="flex items-center space-x-1">
                                     <i class="fas fa-arrow-down text-red-500 text-[11px]"></i>
@@ -465,30 +465,30 @@
                                         
                                         <!-- Item Category -->
                                         <td class="px-3 py-2 group-hover:shadow-md">{{ category.category_name || 'N/A' }}</td>
-                                        
+
                                         <!-- Starting Qty Gold -->
                                         <td class="px-3 py-2 group-hover:shadow-md">{{ roundToTwo(category.starting_quantity_gold || 0) }}</td>
                                         
                                         <!-- Actual Production Gold -->
-                                        <td class="px-3 py-2 group-hover:shadow-md"></td>
+                                        <td class="px-3 py-2 group-hover:shadow-md">{{ roundToTwo(category.actual_production_gold || 0) }}</td>
                                         
                                         <!-- Gross Loss Gold -->
-                                        <td class="px-3 py-2 text-red-500 group-hover:shadow-md"></td>
+                                        <td class="px-3 py-2 text-red-500 group-hover:shadow-md">{{ roundToTwo(category.loss || 0) }}</td>
                                         
                                         <!-- Gold Loss % -->
-                                        <td class="px-3 py-2 text-red-500 group-hover:shadow-md">{{ roundToTwo(calculateGoldLossPercentage(category.actualProductionGold, category.loss)) }}%</td>
+                                        <td class="px-3 py-2 text-red-500 group-hover:shadow-md">{{ roundToTwo(calculateGoldLossPercentage(category.actual_production_gold, category.loss)) }}%</td>
                                         
                                         <!-- Starting Qty Diamond -->
                                         <td class="px-3 py-2 group-hover:shadow-md">{{ roundToTwo(category.starting_quantity_diamond || 0) }}</td>
                                         
                                         <!-- Actual Production Diamond -->
-                                        <td class="px-3 py-2 group-hover:shadow-md"></td>
+                                        <td class="px-3 py-2 group-hover:shadow-md">{{ roundToTwo(category.actual_production_diamond || 0) }}</td>
                                         
                                         <!-- Gross Loss Diamond -->
-                                        <td class="px-3 py-2 text-red-500 group-hover:shadow-md"></td>
+                                        <td class="px-3 py-2 text-red-500 group-hover:shadow-md">{{ roundToTwo(category.loss_diamond || 0) }}</td>
                                         
                                         <!-- Diamond Loss % -->
-                                        <td class="px-3 py-2 text-red-500 group-hover:shadow-md"></td>
+                                        <td class="px-3 py-2 text-red-500 group-hover:shadow-md">{{ roundToTwo(calculateDiamondLossPercentage(category.actual_production_diamond, category.loss_diamond)) }}%</td>
                                         
                                         <!-- Gold Recovery Weight -->
                                         <td class="px-3 py-2 group-hover:shadow-md"></td>
@@ -518,35 +518,41 @@
                                     <!-- Item Category -->
                                     <td class="px-3 py-2 group-hover:shadow-md">N/A</td>
                                     
+                                    <!-- Issued Qty Gold -->
+                                    <td class="px-3 py-2 group-hover:shadow-md">{{ roundToTwo(dept.issued_quantity_gold || 0) }}</td>
+                                    
+                                    <!-- Loss Qty Gold -->
+                                    <td class="px-3 py-2 text-red-500 group-hover:shadow-md">{{ roundToTwo(dept.loss_quantity_gold || 0) }}</td>
+                                    
                                     <!-- Starting Qty Gold -->
                                     <td class="px-3 py-2 group-hover:shadow-md">{{ roundToTwo(dept.starting_quantity_gold || 0) }}</td>
                                     
-                                    <!-- TM Production Gold -->
-                                    <td class="px-3 py-2 group-hover:shadow-md">{{ roundToTwo(dept.production || 0) }}</td>
-                                    
                                     <!-- Actual Production Gold -->
-                                    <td class="px-3 py-2 group-hover:shadow-md">{{ roundToTwo(dept.actualProductionGold || 0) }}</td>
+                                    <td class="px-3 py-2 group-hover:shadow-md">{{ roundToTwo(dept.actual_production_gold || 0) }}</td>
                                     
                                     <!-- Gross Loss Gold -->
                                     <td class="px-3 py-2 text-red-500 group-hover:shadow-md">{{ roundToTwo(dept.loss || 0) }}</td>
                                     
                                     <!-- Gold Loss % -->
-                                    <td class="px-3 py-2 text-red-500 group-hover:shadow-md">{{ roundToTwo(calculateGoldLossPercentage(dept.actualProductionGold, dept.loss)) }}%</td>
+                                    <td class="px-3 py-2 text-red-500 group-hover:shadow-md">{{ roundToTwo(calculateGoldLossPercentage(dept.actual_production_gold, dept.loss)) }}%</td>
+                                    
+                                    <!-- Issued Qty Diamond -->
+                                    <td class="px-3 py-2 group-hover:shadow-md">{{ roundToTwo(dept.issued_quantity_diamond || 0) }}</td>
+                                    
+                                    <!-- Loss Qty Diamond -->
+                                    <td class="px-3 py-2 text-red-500 group-hover:shadow-md">{{ roundToTwo(dept.loss_quantity_diamond || 0) }}</td>
                                     
                                     <!-- Starting Qty Diamond -->
                                     <td class="px-3 py-2 group-hover:shadow-md">{{ roundToTwo(dept.starting_quantity_diamond || 0) }}</td>
                                     
-                                    <!-- TM Production Diamond-->
-                                    <td class="px-3 py-2 group-hover:shadow-md">{{ roundToTwo(dept.production_diamond || 0) }}</td>
-                                    
                                     <!-- Actual Production Diamond -->
-                                    <td class="px-3 py-2 group-hover:shadow-md">{{ roundToTwo(dept.actualProductionDiamond || 0) }}</td>
+                                    <td class="px-3 py-2 group-hover:shadow-md">{{ roundToTwo(dept.actual_production_diamond || 0) }}</td>
                                     
                                     <!-- Gross Loss Diamond -->
                                     <td class="px-3 py-2 text-red-500 group-hover:shadow-md">{{ roundToTwo(dept.loss_diamond || 0) }}</td>
                                     
                                     <!-- Diamond Loss % -->
-                                    <td class="px-3 py-2 text-red-500 group-hover:shadow-md">{{ roundToTwo(calculateDiamondLossPercentage(dept.actualProductionDiamond, dept.loss_diamond)) }}%</td>
+                                    <td class="px-3 py-2 text-red-500 group-hover:shadow-md">{{ roundToTwo(calculateDiamondLossPercentage(dept.actual_production_diamond, dept.loss_diamond)) }}%</td>
                                     
                                     <!-- Gold Recovery Weight -->
                                     <td class="px-3 py-2 group-hover:shadow-md"></td>
@@ -567,10 +573,8 @@
                                 <td class="px-3 py-2" colspan="2" style="text-align: center;">Total</td>
                                 <!-- Total No. of Bags -->
                                 <td class="px-3 py-2 font-semibold text-center bg-blue-50">{{ totalDeptBagCount }}</td>
-                                <!-- Empty -->
+                                <!-- Item Category (empty) -->
                                 <td class="px-3 py-2 font-semibold"></td>
-                                <!-- Starting Qty Gold (empty) -->
-                                <td class="px-3 py-2"></td>
                                 <!-- TM Production Gold -->
                                 <td class="px-3 py-2">{{ totalDeptTmProductionGold }}</td>
                                 <!-- Actual Production Gold -->
@@ -579,8 +583,6 @@
                                 <td class="px-3 py-2 text-red-500">{{ totalDeptGrossLossGold }}</td>
                                 <!-- Gold Loss % (empty) -->
                                 <td class="px-3 py-2 text-red-500"></td>
-                                <!-- Starting Qty Diamond (empty) -->
-                                <td class="px-3 py-2"></td>
                                 <!-- TM Production Diamond -->
                                 <td class="px-3 py-2">{{ totalDeptTmProductionDiamond }}</td>
                                 <!-- Actual Production Diamond -->
@@ -804,7 +806,8 @@ export default {
         const totalDeptActualProductionGold = computed(() => {
             let sum = 0;
             selectedDepartmentData.value.forEach(dept => {
-                sum += parseFloat(dept.actualProductionGold || 0);
+                const actualProduction = (parseFloat(dept.starting_quantity_gold || 0) + parseFloat(dept.issued_quantity_gold || 0) - parseFloat(dept.loss_quantity_gold || 0) - parseFloat(dept.scrap_quantity_gold || 0) - parseFloat(dept.balance_quantity_gold || 0) + parseFloat(dept.expense_jewellery_net_weight || 0));
+                sum += actualProduction;
             });
             return roundToTwo(sum);
         });
@@ -820,7 +823,8 @@ export default {
         const totalDeptActualProductionDiamond = computed(() => {
             let sum = 0;
             selectedDepartmentData.value.forEach(dept => {
-                sum += parseFloat(dept.actualProductionDiamond || 0);
+                const actualProduction = (parseFloat(dept.starting_quantity_diamond || 0) + parseFloat(dept.issued_quantity_diamond || 0) - parseFloat(dept.loss_quantity_diamond || 0) - parseFloat(dept.scrap_quantity_diamond || 0) - parseFloat(dept.balance_quantity_diamond || 0));
+                sum += actualProduction;
             });
             return roundToTwo(sum);
         });
@@ -871,6 +875,38 @@ export default {
                 sum += parseInt(dept.bag_count || 0);
             });
             return sum;
+        });
+
+        const totalDeptIssuedQtyGold = computed(() => {
+            let sum = 0;
+            selectedDepartmentData.value.forEach(dept => {
+                sum += parseFloat(dept.issued_quantity_gold || 0);
+            });
+            return roundToTwo(sum);
+        });
+
+        const totalDeptLossQtyGold = computed(() => {
+            let sum = 0;
+            selectedDepartmentData.value.forEach(dept => {
+                sum += parseFloat(dept.loss_quantity_gold || 0);
+            });
+            return roundToTwo(sum);
+        });
+
+        const totalDeptIssuedQtyDiamond = computed(() => {
+            let sum = 0;
+            selectedDepartmentData.value.forEach(dept => {
+                sum += parseFloat(dept.issued_quantity_diamond || 0);
+            });
+            return roundToTwo(sum);
+        });
+
+        const totalDeptLossQtyDiamond = computed(() => {
+            let sum = 0;
+            selectedDepartmentData.value.forEach(dept => {
+                sum += parseFloat(dept.loss_quantity_diamond || 0);
+            });
+            return roundToTwo(sum);
         });
 
         const totalEmpTmProductionGold = computed(() => {
@@ -1682,9 +1718,16 @@ export default {
                                     issued_quantity_gold: dept.issued_quantity_gold || 0,
                                     loss_quantity_gold: dept.loss_quantity_gold || 0,
                                     starting_quantity_gold: dept.starting_quantity_gold || 0,
+                                    scrap_quantity_gold: dept.scrap_quantity_gold || 0,
+                                    balance_quantity_gold: dept.balance_quantity_gold || 0,
+                                    actual_production_gold: dept.actual_production_gold || 0,
+                                    expense_jewellery_net_weight: dept.expense_jewellery_net_weight || 0,
                                     issued_quantity_diamond: dept.issued_quantity_diamond || 0,
                                     loss_quantity_diamond: dept.loss_quantity_diamond || 0,
                                     starting_quantity_diamond: dept.starting_quantity_diamond || 0,
+                                    scrap_quantity_diamond: dept.scrap_quantity_diamond || 0,
+                                    balance_quantity_diamond: dept.balance_quantity_diamond || 0,
+                                    actual_production_diamond: dept.actual_production_diamond || 0,
                                     issued_pieces_diamond: dept.issued_pieces_diamond || 0,
                                     loss_pieces_diamond: dept.loss_pieces_diamond || 0,
                                     bag_count: dept.bag_count || 0,
@@ -1749,9 +1792,16 @@ export default {
                                     issued_quantity_gold: dept.issued_quantity_gold || 0,
                                     loss_quantity_gold: dept.loss_quantity_gold || 0,
                                     starting_quantity_gold: dept.starting_quantity_gold || 0,
+                                    scrap_quantity_gold: dept.scrap_quantity_gold || 0,
+                                    balance_quantity_gold: dept.balance_quantity_gold || 0,
+                                    actual_production_gold: dept.actual_production_gold || 0,
+                                    expense_jewellery_net_weight: dept.expense_jewellery_net_weight || 0,
                                     issued_quantity_diamond: dept.issued_quantity_diamond || 0,
                                     loss_quantity_diamond: dept.loss_quantity_diamond || 0,
                                     starting_quantity_diamond: dept.starting_quantity_diamond || 0,
+                                    scrap_quantity_diamond: dept.scrap_quantity_diamond || 0,
+                                    balance_quantity_diamond: dept.balance_quantity_diamond || 0,
+                                    actual_production_diamond: dept.actual_production_diamond || 0,
                                     issued_pieces_diamond: dept.issued_pieces_diamond || 0,
                                     loss_pieces_diamond: dept.loss_pieces_diamond || 0,
                                     bag_count: dept.bag_count || 0,
@@ -2330,6 +2380,10 @@ export default {
             totalDeptTmProductionGold,
             totalDeptTmProductionDiamond,
             totalDeptBagCount,
+            totalDeptIssuedQtyGold,
+            totalDeptLossQtyGold,
+            totalDeptIssuedQtyDiamond,
+            totalDeptLossQtyDiamond,
             totalEmpActualProductionGold,
             totalEmpGrossLossGold,
             totalEmpActualProductionDiamond,

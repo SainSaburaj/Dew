@@ -39,6 +39,7 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
         const CACHE_KEY = 'item_list'; // Cache key
         const CACHE_NAME = 'item_cache'; // Cache name
         const DIAMOND_ID = 6;
+        const EXPENSE_JEWELLERY_ID = 10; // Expense: Jewellery class for repair department
         // const METAL_ARRAY_GOLD = [4609, 8410, 8411]; // G18, G22, G994
         const METAL_ARRAY_GOLD = [22327, 22328, 22329, 28612]; // [G18, G22, G994, G14]
         const BARCODING_AND_FG_DEPT_ID = 24;
@@ -8770,6 +8771,22 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                             END
                         ) AS dir_starting_quantity_gold,
 
+                        BUILTIN_RESULT.TYPE_FLOAT(
+                            CASE 
+                                WHEN item.class IN (${GOLD_CLASS_IDS.join(',')}) THEN
+                                    NVL(dir.custrecord_jj_scrap_quantity, 0)
+                                ELSE 0
+                            END
+                        ) AS dir_scrap_quantity_gold,
+
+                        BUILTIN_RESULT.TYPE_FLOAT(
+                            CASE 
+                                WHEN item.class IN (${GOLD_CLASS_IDS.join(',')}) THEN
+                                    NVL(dir.custrecord_jj_additional_quantity, 0)
+                                ELSE 0
+                            END
+                        ) AS dir_balance_quantity_gold,
+
                         /* DIAMOND - Raw Issued/Loss Quantities and Pieces */
                         BUILTIN_RESULT.TYPE_FLOAT(
                             CASE 
@@ -8798,6 +8815,22 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                         BUILTIN_RESULT.TYPE_FLOAT(
                             CASE 
                                 WHEN item.class = ${DIAMOND_ID} THEN
+                                    NVL(dir.custrecord_jj_scrap_quantity, 0)
+                                ELSE 0
+                            END
+                        ) AS dir_scrap_quantity_diamond,
+
+                        BUILTIN_RESULT.TYPE_FLOAT(
+                            CASE 
+                                WHEN item.class = ${DIAMOND_ID} THEN
+                                    NVL(dir.custrecord_jj_additional_quantity, 0)
+                                ELSE 0
+                            END
+                        ) AS dir_balance_quantity_diamond,
+
+                        BUILTIN_RESULT.TYPE_FLOAT(
+                            CASE 
+                                WHEN item.class = ${DIAMOND_ID} THEN
                                     NVL(dir.custrecord_jj_dir_issued_pieces_info, 0)
                                 ELSE 0
                             END
@@ -8810,6 +8843,10 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                                 ELSE 0
                             END
                         ) AS dir_loss_pieces_diamond,
+
+                        /* EXPENSE JEWELLERY - Gold Weight and Diamond Weight from FG Serials */
+                        BUILTIN_RESULT.TYPE_FLOAT(NVL(fgserials.custrecord_jj_fgs_gold_weight, 0)) AS expense_jewellery_gold_weight,
+                        BUILTIN_RESULT.TYPE_FLOAT(NVL(fgserials.custrecord_jj_fgs_diamond_weight, 0)) AS expense_jewellery_diamond_weight,
 
                         /* GOLD - Quantity in grams */
                         BUILTIN_RESULT.TYPE_FLOAT(
@@ -8913,6 +8950,18 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                     LEFT JOIN item printdesign
                         ON bagcore.custrecord_jj_bagcore_kt_col = printdesign.ID
 
+                    LEFT JOIN CUSTOMRECORD_JJ_BAGCORE_MATERIALS bagcorematerial
+                        ON dir.custrecord_jj_bag_core_material_record = bagcorematerial.ID
+
+                    LEFT JOIN CUSTOMRECORD_JJ_BAG_LOT_DETAILS baglotdetails
+                        ON bagcorematerial.ID = baglotdetails.custrecord_jj_bag_core_material
+
+                    LEFT JOIN inventoryNumber seriallot
+                        ON baglotdetails.custrecord_jj_lot_number = seriallot.ID
+
+                    LEFT JOIN CUSTOMRECORD_JJ_FG_SERIALS fgserials
+                        ON seriallot.ID = fgserials.custrecord_jj_fgs_serial
+
                     WHERE
                         NVL(op.isinactive, 'F') = 'F'
                         AND NVL(emp.isinactive, 'F') = 'F'
@@ -8974,14 +9023,22 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                     const diaLossPieces = parseFloat(record.loss_diamond_pieces || 0);
                     const isRepair = record.is_repair === true || record.is_repair === 'T';
 
+                    // Expense Jewellery - Gold Weight and Diamond Weight from FG Serials
+                    const expenseJewelleryGoldWeight = parseFloat(record.expense_jewellery_gold_weight || 0);
+                    const expenseJewelleryDiamondWeight = parseFloat(record.expense_jewellery_diamond_weight || 0);
+
                     // Raw direct issue/return fields - separated by class
                     const dirIssuedQuantityGold = parseFloat(record.dir_issued_quantity_gold || 0);
                     const dirLossQuantityGold = parseFloat(record.dir_loss_quantity_gold || 0);
                     const dirStartingQuantityGold = parseFloat(record.dir_starting_quantity_gold || 0);
+                    const dirScrapQuantityGold = parseFloat(record.dir_scrap_quantity_gold || 0);
+                    const dirBalanceQuantityGold = parseFloat(record.dir_balance_quantity_gold || 0);
 
                     const dirIssuedQuantityDiamond = parseFloat(record.dir_issued_quantity_diamond || 0);
                     const dirLossQuantityDiamond = parseFloat(record.dir_loss_quantity_diamond || 0);
                     const dirStartingQuantityDiamond = parseFloat(record.dir_starting_quantity_diamond || 0);
+                    const dirScrapQuantityDiamond = parseFloat(record.dir_scrap_quantity_diamond || 0);
+                    const dirBalanceQuantityDiamond = parseFloat(record.dir_balance_quantity_diamond || 0);
                     const dirIssuedPiecesDiamond = parseFloat(record.dir_issued_pieces_diamond || 0);
                     const dirLossPiecesDiamond = parseFloat(record.dir_loss_pieces_diamond || 0);
 
@@ -9012,9 +9069,17 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                             issued_quantity_gold: 0,
                             loss_quantity_gold: 0,
                             starting_quantity_gold: 0,
+                            scrap_quantity_gold: 0,
+                            balance_quantity_gold: 0,
+                            actual_production_gold: 0,
+                            expense_jewellery_net_weight: 0,
+                            expense_jewellery_diamond_weight: 0,
                             issued_quantity_diamond: 0,
                             loss_quantity_diamond: 0,
                             starting_quantity_diamond: 0,
+                            scrap_quantity_diamond: 0,
+                            balance_quantity_diamond: 0,
+                            actual_production_diamond: 0,
                             issued_pieces_diamond: 0,
                             loss_pieces_diamond: 0,
                             unique_bags: new Set(),
@@ -9046,9 +9111,17 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                                 issued_quantity_gold: 0,
                                 loss_quantity_gold: 0,
                                 starting_quantity_gold: 0,
+                                scrap_quantity_gold: 0,
+                                balance_quantity_gold: 0,
+                                actual_production_gold: 0,
+                                expense_jewellery_net_weight: 0,
+                                expense_jewellery_diamond_weight: 0,
                                 issued_quantity_diamond: 0,
                                 loss_quantity_diamond: 0,
                                 starting_quantity_diamond: 0,
+                                scrap_quantity_diamond: 0,
+                                balance_quantity_diamond: 0,
+                                actual_production_diamond: 0,
                                 issued_pieces_diamond: 0,
                                 loss_pieces_diamond: 0
                             };
@@ -9105,12 +9178,20 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                     dept.issued_quantity_gold += dirIssuedQuantityGold;
                     dept.loss_quantity_gold += dirLossQuantityGold;
                     dept.starting_quantity_gold += dirStartingQuantityGold;
+                    dept.scrap_quantity_gold += dirScrapQuantityGold;
+                    dept.balance_quantity_gold += dirBalanceQuantityGold;
                     
                     dept.issued_quantity_diamond += dirIssuedQuantityDiamond;
                     dept.loss_quantity_diamond += dirLossQuantityDiamond;
                     dept.starting_quantity_diamond += dirStartingQuantityDiamond;
+                    dept.scrap_quantity_diamond += dirScrapQuantityDiamond;
+                    dept.balance_quantity_diamond += dirBalanceQuantityDiamond;
                     dept.issued_pieces_diamond += dirIssuedPiecesDiamond;
                     dept.loss_pieces_diamond += dirLossPiecesDiamond;
+                    
+                    // Expense Jewellery - Gold Weight and Diamond Weight
+                    dept.expense_jewellery_net_weight += expenseJewelleryGoldWeight;
+                    dept.expense_jewellery_diamond_weight += expenseJewelleryDiamondWeight;
 
                     /* CATEGORY TOTALS */
                     if (itemCategory && dept.categories[itemCategory]) {
@@ -9124,11 +9205,19 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                         cat.issued_quantity_gold += dirIssuedQuantityGold;
                         cat.loss_quantity_gold += dirLossQuantityGold;
                         cat.starting_quantity_gold += dirStartingQuantityGold;
+                        cat.scrap_quantity_gold += dirScrapQuantityGold;
+                        cat.balance_quantity_gold += dirBalanceQuantityGold;
                         cat.issued_quantity_diamond += dirIssuedQuantityDiamond;
                         cat.loss_quantity_diamond += dirLossQuantityDiamond;
                         cat.starting_quantity_diamond += dirStartingQuantityDiamond;
+                        cat.scrap_quantity_diamond += dirScrapQuantityDiamond;
+                        cat.balance_quantity_diamond += dirBalanceQuantityDiamond;
                         cat.issued_pieces_diamond += dirIssuedPiecesDiamond;
                         cat.loss_pieces_diamond += dirLossPiecesDiamond;
+                        
+                        // Expense Jewellery - Gold Weight and Diamond Weight
+                        cat.expense_jewellery_net_weight += expenseJewelleryGoldWeight;
+                        cat.expense_jewellery_diamond_weight += expenseJewelleryDiamondWeight;
                     }
 
                     /* LOCATION TOTALS */
@@ -9154,9 +9243,29 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                             dept.bag_count = (dept.unique_bags && dept.unique_bags.size) ? dept.unique_bags.size : 0;
                             dept.category_count = (dept.unique_categories && dept.unique_categories.size) ? dept.unique_categories.size : 0;
                             
-                            // Convert categories object to array
+                            // Calculate actual production for department
+                            // Formula: starting qty + issued qty - loss qty - scrap qty - balance qty
+                            // For Expense Jewellery, use gold/diamond weight if available
+                            dept.actual_production_gold = dept.expense_jewellery_net_weight > 0 
+                                ? dept.expense_jewellery_net_weight 
+                                : (dept.starting_quantity_gold + dept.issued_quantity_gold - dept.loss_quantity_gold - dept.scrap_quantity_gold - dept.balance_quantity_gold);
+                            dept.actual_production_diamond = dept.expense_jewellery_diamond_weight > 0 
+                                ? dept.expense_jewellery_diamond_weight 
+                                : (dept.starting_quantity_diamond + dept.issued_quantity_diamond - dept.loss_quantity_diamond - dept.scrap_quantity_diamond - dept.balance_quantity_diamond);
+                            
+                            // Convert categories object to array and calculate actual production for each category
                             if (dept.categories && typeof dept.categories === 'object') {
-                                dept.categories_array = Object.values(dept.categories);
+                                dept.categories_array = Object.values(dept.categories).map(cat => {
+                                    // Calculate actual production for category
+                                    // For Expense Jewellery, use gold/diamond weight if available
+                                    cat.actual_production_gold = cat.expense_jewellery_net_weight > 0 
+                                        ? cat.expense_jewellery_net_weight 
+                                        : (cat.starting_quantity_gold + cat.issued_quantity_gold - cat.loss_quantity_gold - cat.scrap_quantity_gold - cat.balance_quantity_gold);
+                                    cat.actual_production_diamond = cat.expense_jewellery_diamond_weight > 0 
+                                        ? cat.expense_jewellery_diamond_weight 
+                                        : (cat.starting_quantity_diamond + cat.issued_quantity_diamond - cat.loss_quantity_diamond - cat.scrap_quantity_diamond - cat.balance_quantity_diamond);
+                                    return cat;
+                                });
                             } else {
                                 dept.categories_array = [];
                             }
