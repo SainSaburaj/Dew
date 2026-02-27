@@ -319,6 +319,18 @@
                     <div class="flex-1 pl-2 pr-2 py-2 bg-white rounded-r-lg border-2 border-white shadow-md">
                         <p class="text-sm font-semibold text-gray-700">{{ emp.name }}</p>
 
+                        <!-- Starting Quantity Section -->
+                        <div class="grid grid-cols-2 gap-x-2 mt-2 mb-2 bg-blue-50 rounded p-2">
+                            <div class="flex flex-col items-center">
+                                <span class="text-[10px] text-gray-600 font-semibold">Starting Qty Gold</span>
+                                <span class="text-[11px] text-blue-600 font-bold">{{ roundToTwo(emp.starting_quantity_gold || 0) }}</span>
+                            </div>
+                            <div class="flex flex-col items-center">
+                                <span class="text-[10px] text-gray-600 font-semibold">Starting Qty Diamond</span>
+                                <span class="text-[11px] text-blue-600 font-bold">{{ roundToTwo(emp.starting_quantity_diamond || 0) }}</span>
+                            </div>
+                        </div>
+
                         <div class="text-[11px] font-semibold w-full text-center bg-gray-100 rounded p-1 mb-1">Issued & Loss Quantity</div>
 
                         <div class="grid grid-cols-2 mt-1 gap-y-1">
@@ -331,11 +343,11 @@
                                 <span class="text-[11px] text-gray-700 mt-1">grams</span>
                                 <div class="flex items-center space-x-1">
                                     <i class="fas fa-arrow-up text-green-500 text-[11px]"></i>
-                                    <p class="text-green-500 text-[11px]">{{ roundToTwo(emp.tmProduction || 0) }}</p>
+                                    <p class="text-green-500 text-[11px]">{{ roundToTwo(emp.issued_quantity_gold || 0) }}</p>
                                 </div>
                                 <div class="flex items-center space-x-1">
                                     <i class="fas fa-arrow-down text-red-500 text-[11px]"></i>
-                                    <p class="text-red-500 text-[11px]">{{ roundToTwo(emp.grossLoss || 0) }}</p>
+                                    <p class="text-red-500 text-[11px]">{{ roundToTwo(emp.loss_quantity_gold || 0) }}</p>
                                 </div>
                             </div>
 
@@ -351,11 +363,11 @@
                                         <span class="text-[11px] text-gray-700">carat</span>
                                         <div class="flex items-center space-x-1">
                                             <i class="fas fa-arrow-up text-green-500 text-[11px]"></i>
-                                            <p class="text-green-500 text-[11px]">{{ roundToTwo(emp.tmProductionDiamond || 0) }}</p>
+                                            <p class="text-green-500 text-[11px]">{{ roundToTwo(emp.issued_quantity_diamond || 0) }}</p>
                                         </div>
                                         <div class="flex items-center space-x-1">
                                             <i class="fas fa-arrow-down text-red-500 text-[11px]"></i>
-                                            <p class="text-red-500 text-[11px]">{{ roundToTwo(emp.grossLossDiamond || 0) }}</p>
+                                            <p class="text-red-500 text-[11px]">{{ roundToTwo(emp.loss_quantity_diamond || 0) }}</p>
                                         </div>
                                     </div>
 
@@ -364,11 +376,11 @@
                                         <span class="text-[11px] text-gray-700">pieces</span>
                                         <div class="flex items-center space-x-1">
                                             <i class="fas fa-arrow-up text-green-500 text-[11px]"></i>
-                                            <p class="text-green-500 text-[11px]">{{ roundToTwo(emp.tmProductionDiamondPieces || 0) }}</p>
+                                            <p class="text-green-500 text-[11px]">{{ roundToTwo(emp.issued_pieces_diamond || 0) }}</p>
                                         </div>
                                         <div class="flex items-center space-x-1">
                                             <i class="fas fa-arrow-down text-red-500 text-[11px]"></i>
-                                            <p class="text-red-500 text-[11px]">{{ roundToTwo(emp.grossLossDiamondPieces || 0) }}</p>
+                                            <p class="text-red-500 text-[11px]">{{ roundToTwo(emp.loss_pieces_diamond || 0) }}</p>
                                         </div>
                                     </div>
                                 </div>
@@ -387,11 +399,11 @@
                                 </div>
                                 <div class="flex items-center space-x-1">
                                     <i class="fas fa-arrow-up text-green-500 text-[11px]"></i>
-                                    <p class="text-green-500 text-[11px]">{{ roundToTwo(emp.actualProductionGold || 0) }}</p>
+                                    <p class="text-green-500 text-[11px]">{{ roundToTwo((emp.starting_quantity_gold || 0) + (emp.issued_quantity_gold || 0) - (emp.loss_quantity_gold || 0) - (emp.scrap_quantity_gold || 0) - (emp.balance_quantity_gold || 0)) }}</p>
                                 </div>
                                 <div class="flex items-center space-x-1">
                                     <i class="fas fa-arrow-down text-red-500 text-[11px]"></i>
-                                    <p class="text-red-500 text-[11px]">{{ roundToTwo(emp.actualLossGold || 0) }}</p>
+                                    <p class="text-red-500 text-[11px]">{{ roundToTwo(emp.grossLoss || 0) }}</p>
                                 </div>
                             </div>
 
@@ -403,11 +415,11 @@
                                 </div>
                                 <div class="flex items-center space-x-1">
                                     <i class="fas fa-arrow-up text-green-500 text-[11px]"></i>
-                                    <p class="text-green-500 text-[11px]">{{ roundToTwo(emp.actualProductionDiamond || 0) }}</p>
+                                    <p class="text-green-500 text-[11px]">{{ roundToTwo((emp.starting_quantity_diamond || 0) + (emp.issued_quantity_diamond || 0) - (emp.loss_quantity_diamond || 0) - (emp.scrap_quantity_diamond || 0) - (emp.balance_quantity_diamond || 0)) }}</p>
                                 </div>
                                 <div class="flex items-center space-x-1">
                                     <i class="fas fa-arrow-down text-red-500 text-[11px]"></i>
-                                    <p class="text-red-500 text-[11px]">{{ roundToTwo(emp.actualLossDiamond || 0) }}</p>
+                                    <p class="text-red-500 text-[11px]">{{ roundToTwo(emp.grossLossDiamond || 0) }}</p>
                                 </div>
                             </div>
                         </div>
@@ -1721,6 +1733,7 @@ export default {
                                     scrap_quantity_gold: dept.scrap_quantity_gold || 0,
                                     balance_quantity_gold: dept.balance_quantity_gold || 0,
                                     actual_production_gold: dept.actual_production_gold || 0,
+                                    actualLossGold: dept.loss_quantity_gold || 0,
                                     expense_jewellery_net_weight: dept.expense_jewellery_net_weight || 0,
                                     issued_quantity_diamond: dept.issued_quantity_diamond || 0,
                                     loss_quantity_diamond: dept.loss_quantity_diamond || 0,
@@ -1728,6 +1741,7 @@ export default {
                                     scrap_quantity_diamond: dept.scrap_quantity_diamond || 0,
                                     balance_quantity_diamond: dept.balance_quantity_diamond || 0,
                                     actual_production_diamond: dept.actual_production_diamond || 0,
+                                    actualLossDiamond: dept.loss_quantity_diamond || 0,
                                     issued_pieces_diamond: dept.issued_pieces_diamond || 0,
                                     loss_pieces_diamond: dept.loss_pieces_diamond || 0,
                                     bag_count: dept.bag_count || 0,
@@ -1744,13 +1758,27 @@ export default {
                                             name: emp.name !== "null null" ? emp.name : "Unknown Employee",
                                             tmProduction: emp.tmProduction || 0,
                                             tmProductionDiamond: emp.tmProductionDiamond || 0,
+                                            tmProductionDiamondPieces: emp.tmProductionDiamondPieces || 0,
                                             grossLossDiamond: emp.grossLossDiamond || 0,
+                                            grossLossDiamondPieces: emp.grossLossDiamondPieces || 0,
                                             grossLoss: roundToTwo(grossLossGold),
                                             loss: emp.loss || 0,
                                             netLoss: roundToTwo(netLossGold),
                                             recovery: emp.recovery || 0,
                                             date: emp.date || "N/A",
-                                            tmGrossLossWeight: roundToTwo(goldRecoveryWeight)
+                                            tmGrossLossWeight: roundToTwo(goldRecoveryWeight),
+                                            issued_quantity_gold: emp.issued_quantity_gold || 0,
+                                            loss_quantity_gold: emp.loss_quantity_gold || 0,
+                                            starting_quantity_gold: emp.starting_quantity_gold || 0,
+                                            scrap_quantity_gold: emp.scrap_quantity_gold || 0,
+                                            balance_quantity_gold: emp.balance_quantity_gold || 0,
+                                            issued_quantity_diamond: emp.issued_quantity_diamond || 0,
+                                            loss_quantity_diamond: emp.loss_quantity_diamond || 0,
+                                            starting_quantity_diamond: emp.starting_quantity_diamond || 0,
+                                            scrap_quantity_diamond: emp.scrap_quantity_diamond || 0,
+                                            balance_quantity_diamond: emp.balance_quantity_diamond || 0,
+                                            issued_pieces_diamond: emp.issued_pieces_diamond || 0,
+                                            loss_pieces_diamond: emp.loss_pieces_diamond || 0
                                         };
                                     })
                                 };
@@ -1795,6 +1823,7 @@ export default {
                                     scrap_quantity_gold: dept.scrap_quantity_gold || 0,
                                     balance_quantity_gold: dept.balance_quantity_gold || 0,
                                     actual_production_gold: dept.actual_production_gold || 0,
+                                    actualLossGold: dept.loss_quantity_gold || 0,
                                     expense_jewellery_net_weight: dept.expense_jewellery_net_weight || 0,
                                     issued_quantity_diamond: dept.issued_quantity_diamond || 0,
                                     loss_quantity_diamond: dept.loss_quantity_diamond || 0,
@@ -1802,6 +1831,7 @@ export default {
                                     scrap_quantity_diamond: dept.scrap_quantity_diamond || 0,
                                     balance_quantity_diamond: dept.balance_quantity_diamond || 0,
                                     actual_production_diamond: dept.actual_production_diamond || 0,
+                                    actualLossDiamond: dept.loss_quantity_diamond || 0,
                                     issued_pieces_diamond: dept.issued_pieces_diamond || 0,
                                     loss_pieces_diamond: dept.loss_pieces_diamond || 0,
                                     bag_count: dept.bag_count || 0,
@@ -1818,15 +1848,27 @@ export default {
                                             name: emp.name !== "null null" ? emp.name : "Unknown Employee",
                                             tmProduction: emp.tmProduction || 0,
                                             tmProductionDiamond: emp.tmProductionDiamond || 0,
-                                            grossLossDiamond: emp.grossLossDiamond || 0,
-                                            grossLoss: roundToTwo(grossLossGold),
                                             tmProductionDiamondPieces: emp.tmProductionDiamondPieces || 0,
+                                            grossLossDiamond: emp.grossLossDiamond || 0,
                                             grossLossDiamondPieces: emp.grossLossDiamondPieces || 0,
+                                            grossLoss: roundToTwo(grossLossGold),
                                             loss: emp.loss || 0,
                                             netLoss: roundToTwo(netLossGold),
                                             recovery: emp.recovery || 0,
                                             date: emp.date || "N/A",
-                                            tmGrossLossWeight: roundToTwo(goldRecoveryWeight)
+                                            tmGrossLossWeight: roundToTwo(goldRecoveryWeight),
+                                            issued_quantity_gold: emp.issued_quantity_gold || 0,
+                                            loss_quantity_gold: emp.loss_quantity_gold || 0,
+                                            starting_quantity_gold: emp.starting_quantity_gold || 0,
+                                            scrap_quantity_gold: emp.scrap_quantity_gold || 0,
+                                            balance_quantity_gold: emp.balance_quantity_gold || 0,
+                                            issued_quantity_diamond: emp.issued_quantity_diamond || 0,
+                                            loss_quantity_diamond: emp.loss_quantity_diamond || 0,
+                                            starting_quantity_diamond: emp.starting_quantity_diamond || 0,
+                                            scrap_quantity_diamond: emp.scrap_quantity_diamond || 0,
+                                            balance_quantity_diamond: emp.balance_quantity_diamond || 0,
+                                            issued_pieces_diamond: emp.issued_pieces_diamond || 0,
+                                            loss_pieces_diamond: emp.loss_pieces_diamond || 0
                                         };
                                     })
                                 };

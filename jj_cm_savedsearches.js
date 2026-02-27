@@ -9142,7 +9142,19 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                                 grossLossDiamond: 0,
                                 grossLossDiamondPieces: 0,
                                 repairLoss: 0,
-                                normalLoss: 0
+                                normalLoss: 0,
+                                issued_quantity_gold: 0,
+                                loss_quantity_gold: 0,
+                                starting_quantity_gold: 0,
+                                scrap_quantity_gold: 0,
+                                balance_quantity_gold: 0,
+                                issued_quantity_diamond: 0,
+                                loss_quantity_diamond: 0,
+                                starting_quantity_diamond: 0,
+                                scrap_quantity_diamond: 0,
+                                balance_quantity_diamond: 0,
+                                issued_pieces_diamond: 0,
+                                loss_pieces_diamond: 0
                             };
                         }
 
@@ -9155,6 +9167,21 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                         emp.grossLoss += goldLoss;
                         emp.grossLossDiamond += diaLossCarats;
                         emp.grossLossDiamondPieces += diaLossPieces;
+                        
+                        // Raw quantities separated by class
+                        emp.issued_quantity_gold += dirIssuedQuantityGold;
+                        emp.loss_quantity_gold += dirLossQuantityGold;
+                        emp.starting_quantity_gold += dirStartingQuantityGold;
+                        emp.scrap_quantity_gold += dirScrapQuantityGold;
+                        emp.balance_quantity_gold += dirBalanceQuantityGold;
+                        
+                        emp.issued_quantity_diamond += dirIssuedQuantityDiamond;
+                        emp.loss_quantity_diamond += dirLossQuantityDiamond;
+                        emp.starting_quantity_diamond += dirStartingQuantityDiamond;
+                        emp.scrap_quantity_diamond += dirScrapQuantityDiamond;
+                        emp.balance_quantity_diamond += dirBalanceQuantityDiamond;
+                        emp.issued_pieces_diamond += dirIssuedPiecesDiamond;
+                        emp.loss_pieces_diamond += dirLossPiecesDiamond;
 
                         if (isRepair) {
                             emp.repairLoss += goldLoss;
