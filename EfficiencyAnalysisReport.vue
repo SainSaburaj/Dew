@@ -464,7 +464,7 @@
                                         <td v-if="catIndex === 0" :rowspan="dept.categories.length" class="px-3 py-2 font-semibold text-center bg-blue-50 border-r">{{ dept.bag_count || 0 }}</td>
                                         
                                         <!-- Item Category -->
-                                        <td class="px-3 py-2 bg-yellow-50 font-semibold">{{ category.category_name || 'N/A' }}</td>
+                                        <td class="px-3 py-2 group-hover:shadow-md">{{ category.category_name || 'N/A' }}</td>
                                         
                                         <!-- TM Production Gold -->
                                         <td class="px-3 py-2 group-hover:shadow-md">{{ roundToTwo(category.production || 0) }}</td>
@@ -767,7 +767,9 @@ export default {
         // };
         const getDefaultDateRange = () => {
             const today = new Date();
-            return [today, today]; // Returns range: [today, today]
+            const yesterday = new Date(today);
+            yesterday.setDate(today.getDate() - 1);
+            return [yesterday, yesterday]; // Returns range: [yesterday, yesterday]
         };
         const getDefaultDateRangeLast = () => {
             const today = new Date();
@@ -856,7 +858,7 @@ export default {
         const totalDeptBagCount = computed(() => {
             let sum = 0;
             selectedDepartmentData.value.forEach(dept => {
-                sum += parseInt(dept.bagCount || 0);
+                sum += parseInt(dept.bag_count || 0);
             });
             return sum;
         });
