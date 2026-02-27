@@ -432,13 +432,13 @@
                                 <!-- <th class="px-3 py-2 text-left font-semibold">Dates</th> -->
                                 <th class="px-3 py-2 text-left font-semibold">No. of Bags</th>
                                 <th class="px-3 py-2 text-left font-semibold">Item category</th>
-                                <th class="px-3 py-2 text-left font-semibold">TM Production Gold</th>
+                                <th class="px-3 py-2 text-left font-semibold">Starting Qty Gold</th>
                                 <th class="px-3 py-2 text-left font-semibold">Actual Production Gold</th>
-                                <th class="px-3 py-2 text-left font-semibold">Gross Loss Gold</th>
+                                <th class="px-3 py-2 text-left font-semibold">Loss Qty Gold</th>
                                 <th class="px-3 py-2 text-left font-semibold">Gold Loss %</th>
-                                <th class="px-3 py-2 text-left font-semibold">TM Production Diamond</th>
+                                <th class="px-3 py-2 text-left font-semibold">Starting Qty Diamond</th>
                                 <th class="px-3 py-2 text-left font-semibold">Actual Production Diamond</th>
-                                <th class="px-3 py-2 text-left font-semibold">Gross Loss Diamond</th>
+                                <th class="px-3 py-2 text-left font-semibold">Loss Qty Diamond</th>
                                 <th class="px-3 py-2 text-left font-semibold">Diamond Loss %</th>
                                 <th class="px-3 py-2 text-left font-semibold">Gold Recovery Weight (gm)</th>
                                 <th class="px-3 py-2 text-left font-semibold">Net Loss Gold</th>
@@ -621,8 +621,8 @@
                                             <!-- Item Category -->
                                             <td class="px-3 py-2 group-hover:shadow-md">{{ cat.category_name || 'N/A' }}</td>
                                             
-                                            <!-- Issued Qty Gold -->
-                                            <td class="px-3 py-2 group-hover:shadow-md">{{ roundToTwo(cat.issued_quantity_gold || 0) }}</td>
+                                            <!-- Starting Qty Gold -->
+                                            <td class="px-3 py-2 group-hover:shadow-md">{{ roundToTwo(cat.starting_quantity_gold || 0) }}</td>
                                             
                                             <!-- Actual Production Gold -->
                                             <td class="px-3 py-2 group-hover:shadow-md">{{ roundToTwo(cat.actual_production_gold || 0) }}</td>
@@ -633,8 +633,8 @@
                                             <!-- Gold Loss % -->
                                             <td class="px-3 py-2 text-red-500 group-hover:shadow-md">{{ roundToTwo(calculateGoldLossPercentage(cat.actual_production_gold, cat.loss_quantity_gold)) }}%</td>
                                             
-                                            <!-- Issued Qty Diamond -->
-                                            <td class="px-3 py-2 text-red-500 group-hover:shadow-md">{{ roundToTwo(cat.issued_quantity_diamond || 0) }}</td>
+                                            <!-- Starting Qty Diamond -->
+                                            <td class="px-3 py-2 group-hover:shadow-md">{{ roundToTwo(cat.starting_quantity_diamond || 0) }}</td>
 
                                             <!-- Actual Production Diamond -->
                                             <td class="px-3 py-2 group-hover:shadow-md">{{ roundToTwo(cat.actual_production_diamond || 0) }}</td>
@@ -673,6 +673,9 @@
                                     <!-- Item Category -->
                                     <td class="px-3 py-2 group-hover:shadow-md">N/A</td>
                                     
+                                    <!-- Starting Qty Gold -->
+                                    <td class="px-3 py-2 group-hover:shadow-md">{{ roundToTwo(emp.starting_quantity_gold || 0) }}</td>
+                                    
                                     <!-- Issued Qty Gold -->
                                     <td class="px-3 py-2 group-hover:shadow-md">{{ roundToTwo(emp.issued_quantity_gold || 0) }}</td>
                                     
@@ -685,8 +688,11 @@
                                     <!-- Gold Loss % -->
                                     <td class="px-3 py-2 text-red-500 group-hover:shadow-md">%</td>
                                     
+                                    <!-- Starting Qty Diamond -->
+                                    <td class="px-3 py-2 group-hover:shadow-md">{{ roundToTwo(emp.starting_quantity_diamond || 0) }}</td>
+                                    
                                     <!-- Issued Qty Diamond -->
-                                    <td class="px-3 py-2 text-red-500 group-hover:shadow-md">{{ roundToTwo(emp.issued_quantity_diamond || 0) }}</td>
+                                    <td class="px-3 py-2 group-hover:shadow-md">{{ roundToTwo(emp.issued_quantity_diamond || 0) }}</td>
 
                                     <!-- Actual Production Diamond -->
                                     <td class="px-3 py-2 group-hover:shadow-md">{{ roundToTwo((emp.starting_quantity_diamond || 0) + (emp.issued_quantity_diamond || 0) - (emp.loss_quantity_diamond || 0) - (emp.scrap_quantity_diamond || 0) - (emp.balance_quantity_diamond || 0)) }}</td>
@@ -716,21 +722,25 @@
                                 <td class="px-3 py-2" colspan="2" style="text-align: center;">Total</td>
                                 <!-- Total No. of Bags -->
                                 <td class="px-3 py-2 font-semibold text-center bg-blue-50">{{ totalEmpBagCount }}</td>
-                                <!-- Empty -->
+                                <!-- Empty Category -->
                                 <td class="px-3 py-2 font-semibold"></td>
-                                <!-- TM Production Gold -->
+                                <!-- Starting Qty Gold -->
+                                <td class="px-3 py-2"></td>
+                                <!-- Issued Qty Gold -->
                                 <td class="px-3 py-2"></td>
                                 <!-- Actual Production Gold -->
                                 <td class="px-3 py-2"></td>
-                                <!-- Gross Loss Gold -->
+                                <!-- Loss Qty Gold -->
                                 <td class="px-3 py-2 text-red-500"></td>
                                 <!-- Gold Loss % (empty) -->
                                 <td class="px-3 py-2 text-red-500"></td>
-                                <!-- TM Production Diamond -->
+                                <!-- Starting Qty Diamond -->
+                                <td class="px-3 py-2"></td>
+                                <!-- Issued Qty Diamond -->
                                 <td class="px-3 py-2"></td>
                                 <!-- Actual Production Diamond -->
                                 <td class="px-3 py-2"></td>
-                                <!-- Gross Loss Diamond -->
+                                <!-- Loss Qty Diamond -->
                                 <td class="px-3 py-2 text-red-500"></td>
                                 <!-- Diamond Loss % (empty) -->
                                 <td class="px-3 py-2 text-red-500"></td>
