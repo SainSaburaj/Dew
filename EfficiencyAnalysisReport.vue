@@ -319,6 +319,11 @@
                     <div class="flex-1 pl-2 pr-2 py-2 bg-white rounded-r-lg border-2 border-white shadow-md">
                         <p class="text-sm font-semibold text-gray-700">{{ emp.name }}</p>
 
+                        <!-- Bag Count -->
+                        <div class="bg-green-50 p-1 rounded mb-2 text-center">
+                            <p class="text-[10px] font-semibold text-gray-700">No. of Bags: <span class="text-blue-600">{{ emp.bag_count || 0 }}</span></p>
+                        </div>
+
                         <div class="text-[11px] font-semibold w-full text-center bg-gray-100 rounded p-1 mb-1">Issued & Loss Quantity</div>
 
                         <div class="grid grid-cols-2 mt-1 gap-y-1">
@@ -575,16 +580,16 @@
                                 <td class="px-3 py-2 font-semibold text-center bg-blue-50">{{ totalDeptBagCount }}</td>
                                 <!-- Item Category (empty) -->
                                 <td class="px-3 py-2 font-semibold"></td>
-                                <!-- TM Production Gold -->
-                                <td class="px-3 py-2">{{ totalDeptTmProductionGold }}</td>
+                                <!-- Starting Qty Gold -->
+                                <td class="px-3 py-2">{{ totalDeptStartingQuantityGold }}</td>
                                 <!-- Actual Production Gold -->
                                 <td class="px-3 py-2">{{ totalDeptActualProductionGold }}</td>
                                 <!-- Gross Loss Gold -->
                                 <td class="px-3 py-2 text-red-500">{{ totalDeptGrossLossGold }}</td>
                                 <!-- Gold Loss % (empty) -->
                                 <td class="px-3 py-2 text-red-500"></td>
-                                <!-- TM Production Diamond -->
-                                <td class="px-3 py-2">{{ totalDeptTmProductionDiamond }}</td>
+                                <!-- Starting Qty Diamond -->
+                                <td class="px-3 py-2">{{ totalDeptStartingQuantityDiamond }}</td>
                                 <!-- Actual Production Diamond -->
                                 <td class="px-3 py-2">{{ totalDeptActualProductionDiamond }}</td>
                                 <!-- Gross Loss Diamond -->
@@ -646,10 +651,10 @@
                                             <td class="px-3 py-2 text-red-500 group-hover:shadow-md">{{ roundToTwo(calculateDiamondLossPercentage(cat.actual_production_diamond, cat.loss_quantity_diamond)) }}%</td>
                                             
                                             <!-- Gold Recovery Weight (rowspan for first category row) -->
-                                            <td class="px-3 py-2 group-hover:shadow-md">{{ roundToTwo(emp.tmGrossLossWeight || 0) }}</td>
+                                            <td class="px-3 py-2 group-hover:shadow-md"></td>
                                             
                                             <!-- Net Loss Gold (rowspan for first category row) -->
-                                            <td class="px-3 py-2 text-red-500 group-hover:shadow-md">{{ roundToTwo(emp.netLoss || 0) }}</td>
+                                            <td class="px-3 py-2 text-red-500 group-hover:shadow-md"></td>
                                             
                                             <!-- Diamond Recovery Weight (empty, rowspan for first category row) -->
                                             <td class="px-3 py-2 group-hover:shadow-md"></td>
@@ -725,23 +730,21 @@
                                 <!-- Empty Category -->
                                 <td class="px-3 py-2 font-semibold"></td>
                                 <!-- Starting Qty Gold -->
-                                <td class="px-3 py-2"></td>
-                                <!-- Issued Qty Gold -->
-                                <td class="px-3 py-2"></td>
+                                <td class="px-3 py-2">{{ totalEmpStartingQuantityGold }}</td>
                                 <!-- Actual Production Gold -->
-                                <td class="px-3 py-2"></td>
+                                <td class="px-3 py-2">{{ totalEmpActualProductionGoldCalculated }}</td>
                                 <!-- Loss Qty Gold -->
-                                <td class="px-3 py-2 text-red-500"></td>
+                                <td class="px-3 py-2 text-red-500">{{ totalEmpLossQuantityGold }}</td>
                                 <!-- Gold Loss % (empty) -->
                                 <td class="px-3 py-2 text-red-500"></td>
                                 <!-- Starting Qty Diamond -->
-                                <td class="px-3 py-2"></td>
+                                <td class="px-3 py-2">{{ totalEmpStartingQuantityDiamond }}</td>
                                 <!-- Issued Qty Diamond -->
-                                <td class="px-3 py-2"></td>
+                                <td class="px-3 py-2">{{ totalEmpIssuedQuantityDiamond }}</td>
                                 <!-- Actual Production Diamond -->
-                                <td class="px-3 py-2"></td>
+                                <td class="px-3 py-2">{{ totalEmpActualProductionDiamondCalculated }}</td>
                                 <!-- Loss Qty Diamond -->
-                                <td class="px-3 py-2 text-red-500"></td>
+                                <td class="px-3 py-2 text-red-500">{{ totalEmpLossQuantityDiamond }}</td>
                                 <!-- Diamond Loss % (empty) -->
                                 <td class="px-3 py-2 text-red-500"></td>
                                 <!-- Gold Recovery Weight -->
@@ -868,6 +871,22 @@ export default {
 
 
         // Compute Department Table Totals (sum all rows in table)
+        const totalDeptStartingQuantityGold = computed(() => {
+            let sum = 0;
+            selectedDepartmentData.value.forEach(dept => {
+                sum += parseFloat(dept.starting_quantity_gold || 0);
+            });
+            return roundToTwo(sum);
+        });
+
+        const totalDeptStartingQuantityDiamond = computed(() => {
+            let sum = 0;
+            selectedDepartmentData.value.forEach(dept => {
+                sum += parseFloat(dept.starting_quantity_diamond || 0);
+            });
+            return roundToTwo(sum);
+        });
+
         const totalDeptActualProductionGold = computed(() => {
             let sum = 0;
             selectedDepartmentData.value.forEach(dept => {
@@ -1043,6 +1062,120 @@ export default {
             let sum = 0;
             selectedEmployees.value.forEach(emp => {
                 sum += parseFloat(emp.netLoss || 0);
+            });
+            return roundToTwo(sum);
+        });
+
+        const totalEmpStartingQuantityGold = computed(() => {
+            let sum = 0;
+            selectedEmployees.value.forEach(emp => {
+                if (emp.categories && emp.categories.length > 0) {
+                    emp.categories.forEach(cat => {
+                        sum += parseFloat(cat.starting_quantity_gold || 0);
+                    });
+                } else {
+                    sum += parseFloat(emp.starting_quantity_gold || 0);
+                }
+            });
+            return roundToTwo(sum);
+        });
+
+        const totalEmpIssuedQuantityGold = computed(() => {
+            let sum = 0;
+            selectedEmployees.value.forEach(emp => {
+                if (emp.categories && emp.categories.length > 0) {
+                    emp.categories.forEach(cat => {
+                        sum += parseFloat(cat.issued_quantity_gold || 0);
+                    });
+                } else {
+                    sum += parseFloat(emp.issued_quantity_gold || 0);
+                }
+            });
+            return roundToTwo(sum);
+        });
+
+        const totalEmpLossQuantityGold = computed(() => {
+            let sum = 0;
+            selectedEmployees.value.forEach(emp => {
+                if (emp.categories && emp.categories.length > 0) {
+                    emp.categories.forEach(cat => {
+                        sum += parseFloat(cat.loss_quantity_gold || 0);
+                    });
+                } else {
+                    sum += parseFloat(emp.loss_quantity_gold || 0);
+                }
+            });
+            return roundToTwo(sum);
+        });
+
+        const totalEmpStartingQuantityDiamond = computed(() => {
+            let sum = 0;
+            selectedEmployees.value.forEach(emp => {
+                if (emp.categories && emp.categories.length > 0) {
+                    emp.categories.forEach(cat => {
+                        sum += parseFloat(cat.starting_quantity_diamond || 0);
+                    });
+                } else {
+                    sum += parseFloat(emp.starting_quantity_diamond || 0);
+                }
+            });
+            return roundToTwo(sum);
+        });
+
+        const totalEmpIssuedQuantityDiamond = computed(() => {
+            let sum = 0;
+            selectedEmployees.value.forEach(emp => {
+                if (emp.categories && emp.categories.length > 0) {
+                    emp.categories.forEach(cat => {
+                        sum += parseFloat(cat.issued_quantity_diamond || 0);
+                    });
+                } else {
+                    sum += parseFloat(emp.issued_quantity_diamond || 0);
+                }
+            });
+            return roundToTwo(sum);
+        });
+
+        const totalEmpLossQuantityDiamond = computed(() => {
+            let sum = 0;
+            selectedEmployees.value.forEach(emp => {
+                if (emp.categories && emp.categories.length > 0) {
+                    emp.categories.forEach(cat => {
+                        sum += parseFloat(cat.loss_quantity_diamond || 0);
+                    });
+                } else {
+                    sum += parseFloat(emp.loss_quantity_diamond || 0);
+                }
+            });
+            return roundToTwo(sum);
+        });
+
+        const totalEmpActualProductionGoldCalculated = computed(() => {
+            let sum = 0;
+            selectedEmployees.value.forEach(emp => {
+                if (emp.categories && emp.categories.length > 0) {
+                    emp.categories.forEach(cat => {
+                        sum += parseFloat(cat.actual_production_gold || 0);
+                    });
+                } else {
+                    const actualProd = (parseFloat(emp.starting_quantity_gold || 0) + parseFloat(emp.issued_quantity_gold || 0) - parseFloat(emp.loss_quantity_gold || 0) - parseFloat(emp.scrap_quantity_gold || 0) - parseFloat(emp.balance_quantity_gold || 0));
+                    sum += actualProd;
+                }
+            });
+            return roundToTwo(sum);
+        });
+
+        const totalEmpActualProductionDiamondCalculated = computed(() => {
+            let sum = 0;
+            selectedEmployees.value.forEach(emp => {
+                if (emp.categories && emp.categories.length > 0) {
+                    emp.categories.forEach(cat => {
+                        sum += parseFloat(cat.actual_production_diamond || 0);
+                    });
+                } else {
+                    const actualProd = (parseFloat(emp.starting_quantity_diamond || 0) + parseFloat(emp.issued_quantity_diamond || 0) - parseFloat(emp.loss_quantity_diamond || 0) - parseFloat(emp.scrap_quantity_diamond || 0) - parseFloat(emp.balance_quantity_diamond || 0));
+                    sum += actualProd;
+                }
             });
             return roundToTwo(sum);
         });
@@ -2481,6 +2614,8 @@ export default {
             totalDeptTmProductionGold,
             totalDeptTmProductionDiamond,
             totalDeptBagCount,
+            totalDeptStartingQuantityGold,
+            totalDeptStartingQuantityDiamond,
             totalDeptIssuedQtyGold,
             totalDeptLossQtyGold,
             totalDeptIssuedQtyDiamond,
@@ -2494,6 +2629,14 @@ export default {
             totalEmpTmProductionGold,
             totalEmpTmProductionDiamond,
             totalEmpBagCount,
+            totalEmpStartingQuantityGold,
+            totalEmpIssuedQuantityGold,
+            totalEmpLossQuantityGold,
+            totalEmpStartingQuantityDiamond,
+            totalEmpIssuedQuantityDiamond,
+            totalEmpLossQuantityDiamond,
+            totalEmpActualProductionGoldCalculated,
+            totalEmpActualProductionDiamondCalculated,
             showNoDataMessage,
             fetchEfficiencyAnalysisData,
             calculateGoldLossPercentage,
