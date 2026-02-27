@@ -331,11 +331,11 @@
                                 <span class="text-[11px] text-gray-700 mt-1">grams</span>
                                 <div class="flex items-center space-x-1">
                                     <i class="fas fa-arrow-up text-green-500 text-[11px]"></i>
-                                    <p class="text-green-500 text-[11px]">{{ roundToTwo(emp.tmProduction) }}</p>
+                                    <p class="text-green-500 text-[11px]">{{ roundToTwo(emp.tmProduction || 0) }}</p>
                                 </div>
                                 <div class="flex items-center space-x-1">
                                     <i class="fas fa-arrow-down text-red-500 text-[11px]"></i>
-                                    <p class="text-red-500 text-[11px]">{{ roundToTwo(emp.grossLoss) }}</p>
+                                    <p class="text-red-500 text-[11px]">{{ roundToTwo(emp.grossLoss || 0) }}</p>
                                 </div>
                             </div>
 
@@ -351,11 +351,11 @@
                                         <span class="text-[11px] text-gray-700">carat</span>
                                         <div class="flex items-center space-x-1">
                                             <i class="fas fa-arrow-up text-green-500 text-[11px]"></i>
-                                            <p class="text-green-500 text-[11px]">{{ roundToTwo(emp.tmProductionDiamond) }}</p>
+                                            <p class="text-green-500 text-[11px]">{{ roundToTwo(emp.tmProductionDiamond || 0) }}</p>
                                         </div>
                                         <div class="flex items-center space-x-1">
                                             <i class="fas fa-arrow-down text-red-500 text-[11px]"></i>
-                                            <p class="text-red-500 text-[11px]">{{ roundToTwo(emp.grossLossDiamond) }}</p>
+                                            <p class="text-red-500 text-[11px]">{{ roundToTwo(emp.grossLossDiamond || 0) }}</p>
                                         </div>
                                     </div>
 
@@ -364,11 +364,11 @@
                                         <span class="text-[11px] text-gray-700">pieces</span>
                                         <div class="flex items-center space-x-1">
                                             <i class="fas fa-arrow-up text-green-500 text-[11px]"></i>
-                                            <p class="text-green-500 text-[11px]">{{ roundToTwo(emp.tmProductionDiamondPieces) }}</p>
+                                            <p class="text-green-500 text-[11px]">{{ roundToTwo(emp.tmProductionDiamondPieces || 0) }}</p>
                                         </div>
                                         <div class="flex items-center space-x-1">
                                             <i class="fas fa-arrow-down text-red-500 text-[11px]"></i>
-                                            <p class="text-red-500 text-[11px]">{{ roundToTwo(emp.grossLossDiamondPieces) }}</p>
+                                            <p class="text-red-500 text-[11px]">{{ roundToTwo(emp.grossLossDiamondPieces || 0) }}</p>
                                         </div>
                                     </div>
                                 </div>
@@ -619,34 +619,34 @@
                                     <td class="px-3 py-2 group-hover:shadow-md"></td>
                                     
                                     <!-- TM Production Gold -->
-                                    <td class="px-3 py-2 group-hover:shadow-md">{{ roundToTwo(emp.tmProduction || 0) }}</td>
+                                    <td class="px-3 py-2 group-hover:shadow-md"></td>
                                     
                                     <!-- Actual Production Gold -->
-                                    <td class="px-3 py-2 group-hover:shadow-md">{{ roundToTwo(emp.actualProductionGold || 0) }}</td>
+                                    <td class="px-3 py-2 group-hover:shadow-md"></td>
                                     
                                     <!-- Gross Loss Gold -->
-                                    <td class="px-3 py-2 text-red-500 group-hover:shadow-md">{{ roundToTwo(emp.grossLoss || 0) }}</td>
+                                    <td class="px-3 py-2 text-red-500 group-hover:shadow-md"></td>
                                     
                                     <!-- Gold Loss % -->
-                                    <td class="px-3 py-2 text-red-500 group-hover:shadow-md">{{ roundToTwo(calculateGoldLossPercentage(emp.actualProductionGold, emp.grossLoss)) }}%</td>
+                                    <td class="px-3 py-2 text-red-500 group-hover:shadow-md">%</td>
                                     
                                     <!-- TM Production Diamond -->
                                     <td class="px-3 py-2 text-red-500 group-hover:shadow-md"></td>
 
                                     <!-- Actual Production Diamond -->
-                                    <td class="px-3 py-2 group-hover:shadow-md">{{ roundToTwo(emp.actualProductionDiamond || 0) }}</td>
+                                    <td class="px-3 py-2 group-hover:shadow-md"></td>
                                     
                                     <!-- Gross Loss Diamond -->
-                                    <td class="px-3 py-2 text-red-500 group-hover:shadow-md">{{ roundToTwo(emp.grossLossDiamond || 0) }}</td>
+                                    <td class="px-3 py-2 text-red-500 group-hover:shadow-md"></td>
                                     
                                     <!-- Diamond Loss % -->
-                                    <td class="px-3 py-2 text-red-500 group-hover:shadow-md">{{ roundToTwo(calculateDiamondLossPercentage(emp.actualProductionDiamond, emp.grossLossDiamond)) }}%</td>
+                                    <td class="px-3 py-2 text-red-500 group-hover:shadow-md">%</td>
                                     
                                     <!-- Gold Recovery Weight -->
-                                    <td class="px-3 py-2 group-hover:shadow-md">{{ roundToTwo(emp.tmGrossLossWeight || 0) }}</td>
+                                    <td class="px-3 py-2 group-hover:shadow-md"></td>
                                     
                                     <!-- Net Loss Gold -->
-                                    <td class="px-3 py-2 text-red-500 group-hover:shadow-md">{{ roundToTwo(emp.netLoss || 0) }}</td>
+                                    <td class="px-3 py-2 text-red-500 group-hover:shadow-md"></td>
                                     
                                     <!-- Diamond Recovery Weight (empty) -->
                                     <td class="px-3 py-2 group-hover:shadow-md"></td>
@@ -664,19 +664,19 @@
                                 <!-- Empty -->
                                 <td class="px-3 py-2 font-semibold"></td>
                                 <!-- TM Production Gold -->
-                                <td class="px-3 py-2">{{ totalEmpTmProductionGold }}</td>
+                                <td class="px-3 py-2"></td>
                                 <!-- Actual Production Gold -->
-                                <td class="px-3 py-2">{{ totalEmpActualProductionGold }}</td>
+                                <td class="px-3 py-2"></td>
                                 <!-- Gross Loss Gold -->
-                                <td class="px-3 py-2 text-red-500">{{ totalEmpGrossLossGold }}</td>
+                                <td class="px-3 py-2 text-red-500"></td>
                                 <!-- Gold Loss % (empty) -->
                                 <td class="px-3 py-2 text-red-500"></td>
                                 <!-- TM Production Diamond -->
-                                <td class="px-3 py-2">{{ totalEmpTmProductionDiamond }}</td>
+                                <td class="px-3 py-2"></td>
                                 <!-- Actual Production Diamond -->
-                                <td class="px-3 py-2">{{ totalEmpActualProductionDiamond }}</td>
+                                <td class="px-3 py-2"></td>
                                 <!-- Gross Loss Diamond -->
-                                <td class="px-3 py-2 text-red-500">{{ totalEmpGrossLossDiamond }}</td>
+                                <td class="px-3 py-2 text-red-500"></td>
                                 <!-- Diamond Loss % (empty) -->
                                 <td class="px-3 py-2 text-red-500"></td>
                                 <!-- Gold Recovery Weight -->
