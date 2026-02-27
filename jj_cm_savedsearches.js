@@ -8762,6 +8762,14 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                             END
                         ) AS dir_loss_quantity_gold,
 
+                        BUILTIN_RESULT.TYPE_FLOAT(
+                            CASE 
+                                WHEN item.class IN (${GOLD_CLASS_IDS.join(',')}) THEN
+                                    NVL(dir.custrecord_jj_dir_starting_qty, 0)
+                                ELSE 0
+                            END
+                        ) AS dir_starting_quantity_gold,
+
                         /* DIAMOND - Raw Issued/Loss Quantities and Pieces */
                         BUILTIN_RESULT.TYPE_FLOAT(
                             CASE 
@@ -8778,6 +8786,14 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                                 ELSE 0
                             END
                         ) AS dir_loss_quantity_diamond,
+
+                        BUILTIN_RESULT.TYPE_FLOAT(
+                            CASE 
+                                WHEN item.class = ${DIAMOND_ID} THEN
+                                    NVL(dir.custrecord_jj_dir_starting_qty, 0)
+                                ELSE 0
+                            END
+                        ) AS dir_starting_quantity_diamond,
 
                         BUILTIN_RESULT.TYPE_FLOAT(
                             CASE 
@@ -8961,9 +8977,11 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                     // Raw direct issue/return fields - separated by class
                     const dirIssuedQuantityGold = parseFloat(record.dir_issued_quantity_gold || 0);
                     const dirLossQuantityGold = parseFloat(record.dir_loss_quantity_gold || 0);
+                    const dirStartingQuantityGold = parseFloat(record.dir_starting_quantity_gold || 0);
 
                     const dirIssuedQuantityDiamond = parseFloat(record.dir_issued_quantity_diamond || 0);
                     const dirLossQuantityDiamond = parseFloat(record.dir_loss_quantity_diamond || 0);
+                    const dirStartingQuantityDiamond = parseFloat(record.dir_starting_quantity_diamond || 0);
                     const dirIssuedPiecesDiamond = parseFloat(record.dir_issued_pieces_diamond || 0);
                     const dirLossPiecesDiamond = parseFloat(record.dir_loss_pieces_diamond || 0);
 
@@ -8993,8 +9011,10 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                             loss_diamond_pieces: 0,
                             issued_quantity_gold: 0,
                             loss_quantity_gold: 0,
+                            starting_quantity_gold: 0,
                             issued_quantity_diamond: 0,
                             loss_quantity_diamond: 0,
+                            starting_quantity_diamond: 0,
                             issued_pieces_diamond: 0,
                             loss_pieces_diamond: 0,
                             unique_bags: new Set(),
@@ -9025,8 +9045,10 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                                 loss_diamond_pieces: 0,
                                 issued_quantity_gold: 0,
                                 loss_quantity_gold: 0,
+                                starting_quantity_gold: 0,
                                 issued_quantity_diamond: 0,
                                 loss_quantity_diamond: 0,
+                                starting_quantity_diamond: 0,
                                 issued_pieces_diamond: 0,
                                 loss_pieces_diamond: 0
                             };
@@ -9082,9 +9104,11 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                     // Raw quantities separated by class (no pieces for gold)
                     dept.issued_quantity_gold += dirIssuedQuantityGold;
                     dept.loss_quantity_gold += dirLossQuantityGold;
+                    dept.starting_quantity_gold += dirStartingQuantityGold;
                     
                     dept.issued_quantity_diamond += dirIssuedQuantityDiamond;
                     dept.loss_quantity_diamond += dirLossQuantityDiamond;
+                    dept.starting_quantity_diamond += dirStartingQuantityDiamond;
                     dept.issued_pieces_diamond += dirIssuedPiecesDiamond;
                     dept.loss_pieces_diamond += dirLossPiecesDiamond;
 
@@ -9099,8 +9123,10 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                         cat.loss_diamond_pieces += diaLossPieces;
                         cat.issued_quantity_gold += dirIssuedQuantityGold;
                         cat.loss_quantity_gold += dirLossQuantityGold;
+                        cat.starting_quantity_gold += dirStartingQuantityGold;
                         cat.issued_quantity_diamond += dirIssuedQuantityDiamond;
                         cat.loss_quantity_diamond += dirLossQuantityDiamond;
+                        cat.starting_quantity_diamond += dirStartingQuantityDiamond;
                         cat.issued_pieces_diamond += dirIssuedPiecesDiamond;
                         cat.loss_pieces_diamond += dirLossPiecesDiamond;
                     }
