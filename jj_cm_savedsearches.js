@@ -9353,8 +9353,8 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                                     delete emp.categories;
                                 });
 
-                                // Calculate department bag count as sum of employee bag counts
-                                dept.bag_count = Object.values(dept.employees || {}).reduce((sum, emp) => sum + (emp.bag_count || 0), 0);
+                                // Calculate department bag count from department's own unique_bags Set
+                                dept.bag_count = dept.unique_bags ? dept.unique_bags.size : 0;
                                 dept.category_count = (dept.unique_categories && dept.unique_categories.size) ? dept.unique_categories.size : 0;
 
                                 // Calculate actual production for department
