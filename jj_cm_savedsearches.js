@@ -8983,6 +8983,7 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                             OR NVL(dir.custrecord_jj_dir_loss_quantity, 0) > 0
                             OR NVL(dir.custrecord_jj_dir_issued_pieces_info, 0) > 0
                             OR NVL(dir.custrecord_jj_dir_loss_pieces_info, 0) > 0
+                            OR NVL(dir.custrecord_jj_dir_starting_qty, 0) > 0
                         )
                     `;
                     }
@@ -9000,6 +9001,61 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                         log.debug("getOverallEfficiencyData - Raw results count", rawResults.length);
                     } catch (sqlError) {
                         throw sqlError;
+                    }
+
+                    // Fetch ALL bags per department with only date and location filters (no quantity or employee filters)
+                    let departmentBagCounts = {};
+                    if (formattedStartDate && formattedEndDate) {
+                        const sqlStartDate = formatDateToString(formattedStartDate);
+                        const sqlEndDate = formatDateToString(formattedEndDate);
+
+                        let bagCountQuery = `
+                            SELECT DISTINCT
+                                BUILTIN_RESULT.TYPE_INTEGER(dept.ID) AS department_id,
+                                BUILTIN_RESULT.TYPE_STRING(bag.name) AS bag_name
+                            FROM CUSTOMRECORD_JJ_OPERATIONS op
+                            LEFT JOIN CUSTOMRECORD_JJ_BAG_GENERATION bag
+                                ON op.custrecord_jj_oprtns_bagno = bag.ID
+                            LEFT JOIN CUSTOMRECORD_JJ_MANUFACTURING_DEPT dept
+                                ON op.custrecord_jj_oprtns_department = dept.ID
+                            WHERE bag.name IS NOT NULL
+                                AND NVL(op.isinactive, 'F') = 'F'
+                                AND NVL(dept.isinactive, 'F') = 'F'
+                                AND op.custrecord_jj_oprtns_entry >= TO_DATE('${sqlStartDate}', 'YYYY-MM-DD')
+                                AND op.custrecord_jj_oprtns_entry < TO_DATE('${sqlEndDate}', 'YYYY-MM-DD') + 1
+                        `;
+
+                        if (location) {
+                            bagCountQuery += `
+                                AND dept.custrecord_jj_mandept_location IN ('${location}')
+                            `;
+                        }
+
+                        try {
+                            let bagCountResults = query.runSuiteQL({ query: bagCountQuery }).asMappedResults();
+                            log.debug("getOverallEfficiencyData - Bag count query results", bagCountResults.length);
+
+                            // Group bags by department
+                            bagCountResults.forEach(record => {
+                                const deptId = record.department_id;
+                                const bagName = record.bag_name;
+                                
+                                if (deptId && bagName) {
+                                    if (!departmentBagCounts[deptId]) {
+                                        departmentBagCounts[deptId] = new Set();
+                                    }
+                                    departmentBagCounts[deptId].add(bagName);
+                                }
+                            });
+
+                            // Log bag counts per department
+                            Object.entries(departmentBagCounts).forEach(([deptId, bags]) => {
+                                log.debug(`Department ${deptId} - Total Bags (All Operations)`, `Count: ${bags.size} | Bags: ${Array.from(bags).join(', ')}`);
+                            });
+
+                        } catch (bagCountError) {
+                            log.error("Error fetching department bag counts", bagCountError);
+                        }
                     }
 
                     const groupedData = rawResults.reduce((acc, record) => {
@@ -9081,7 +9137,6 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                                 actual_production_diamond: 0,
                                 issued_pieces_diamond: 0,
                                 loss_pieces_diamond: 0,
-                                unique_bags: new Set(),
                                 unique_categories: new Set(),
                                 categories: {}, // Store data by category
                                 employees: {}
@@ -9156,11 +9211,6 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                             }
 
                             const emp = acc[locationId].departments[departmentId].employees[employeeId];
-
-                            // Track unique bags per department (only for records with employees)
-                            if (bagName) {
-                                acc[locationId].departments[departmentId].unique_bags.add(bagName);
-                            }
 
                             // Track unique bags per employee
                             if (bagName) {
@@ -9353,9 +9403,15 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                                     delete emp.categories;
                                 });
 
-                                // Calculate department bag count from department's own unique_bags Set
-                                dept.bag_count = dept.unique_bags ? dept.unique_bags.size : 0;
+                                // Use pre-fetched department bag count from separate query (all bags with only date/location filters)
+                                dept.bag_count = departmentBagCounts[deptId] ? departmentBagCounts[deptId].size : 0;
                                 dept.category_count = (dept.unique_categories && dept.unique_categories.size) ? dept.unique_categories.size : 0;
+                                
+                                // Log all bag numbers for this department
+                                if (departmentBagCounts[deptId] && departmentBagCounts[deptId].size > 0) {
+                                    const bagNumbers = Array.from(departmentBagCounts[deptId]).join(', ');
+                                    log.debug(`Department: ${dept.department_name} - Bag Numbers (All Operations)`, `Total: ${dept.bag_count} | Bags: ${bagNumbers}`);
+                                }
 
                                 // Calculate actual production for department
                                 // Formula: starting qty + issued qty - loss qty - scrap qty - balance qty
@@ -9385,7 +9441,6 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                                 }
 
                                 // Remove non-serializable objects
-                                delete dept.unique_bags;
                                 delete dept.unique_categories;
                                 delete dept.categories;
                             });
