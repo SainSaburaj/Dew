@@ -40,8 +40,8 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
         const CACHE_NAME = 'item_cache'; // Cache name
         const DIAMOND_ID = 6;
         const EXPENSE_JEWELLERY_ID = 10; // Expense: Jewellery class for repair department
-        // const METAL_ARRAY_GOLD = [4609, 8410, 8411]; // G18, G22, G994
-        const METAL_ARRAY_GOLD = [22327, 22328, 22329, 28612]; // [G18, G22, G994, G14]
+        // const METAL_ARRAY_GOLD = [4609, 8410, 8411, 25093]; // [G18, G22, G994, G14] // SB
+        const METAL_ARRAY_GOLD = [22327, 22328, 22329, 28612]; // [G18, G22, G994, G14] // PD
         const BARCODING_AND_FG_DEPT_ID = 24;
         const PAGE_SIZE = 10; // Number of records per page
         const OPERATION_STATUS_IN_TRANSIT = 2;
@@ -63,7 +63,7 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
         const GOLD_CLASS_IDS = [5, 22, 23, 24, 25]; // [Gold, Gold Bullion, Gold Findings, Gold Mountings, Gold Back Chain]
         const GOLD_SCRAP_ITEM_LOT_NAME = "Scrap_Gold";
         const GOLD_SCRAP_ITEM_ID = 9321; // Internal id of the item "Scrap"
-        const SCRAP_ITEM_PARENT_ID = 37469; // Parent internal id for scrap items
+        const SCRAP_ITEM_PARENT_ID = 37469; // Parent internal id for scrap items (PD)
         const CURRENCY_INR_ID = 1;
         const JEWELRY_TYPE_ID = 8;
         const CARATS_TO_GRAMS_CONST = 0.2;
@@ -8705,28 +8705,28 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                         return {};
                     }
 
-                // Format dates as strings for SQL query (keep original string format)
-                const formattedStartDate = startDate;
-                const formattedEndDate = endDate;
+                    // Format dates as strings for SQL query (keep original string format)
+                    const formattedStartDate = startDate;
+                    const formattedEndDate = endDate;
 
-                // Helper function to format Date object to YYYY-MM-DD
-                const formatDateToString = (dateStr) => {
-                    if (!dateStr) return null;
-                    // If it's already a string in YYYY-MM-DD format, return as is
-                    if (typeof dateStr === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
+                    // Helper function to format Date object to YYYY-MM-DD
+                    const formatDateToString = (dateStr) => {
+                        if (!dateStr) return null;
+                        // If it's already a string in YYYY-MM-DD format, return as is
+                        if (typeof dateStr === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
+                            return dateStr;
+                        }
+                        // If it's a Date object, format it
+                        if (dateStr instanceof Date) {
+                            const year = dateStr.getFullYear();
+                            const month = String(dateStr.getMonth() + 1).padStart(2, '0');
+                            const day = String(dateStr.getDate()).padStart(2, '0');
+                            return `${year}-${month}-${day}`;
+                        }
                         return dateStr;
-                    }
-                    // If it's a Date object, format it
-                    if (dateStr instanceof Date) {
-                        const year = dateStr.getFullYear();
-                        const month = String(dateStr.getMonth() + 1).padStart(2, '0');
-                        const day = String(dateStr.getDate()).padStart(2, '0');
-                        return `${year}-${month}-${day}`;
-                    }
-                    return dateStr;
-                };
+                    };
 
-                let sqlQuery = `
+                    let sqlQuery = `
                     SELECT 
                         BUILTIN_RESULT.TYPE_STRING(op.name) AS operation_id,
                         BUILTIN_RESULT.TYPE_BOOLEAN(op.custrecord_jj_repair_order) AS is_repair,
@@ -8969,11 +8969,11 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                 `;
 
 
-                if (formattedStartDate && formattedEndDate) {
-                    const sqlStartDate = formatDateToString(formattedStartDate);
-                    const sqlEndDate = formatDateToString(formattedEndDate);
+                    if (formattedStartDate && formattedEndDate) {
+                        const sqlStartDate = formatDateToString(formattedStartDate);
+                        const sqlEndDate = formatDateToString(formattedEndDate);
 
-                    sqlQuery += `
+                        sqlQuery += `
                         AND (
                             op.custrecord_jj_oprtns_entry >= TO_DATE('${sqlStartDate}', 'YYYY-MM-DD')
                             AND op.custrecord_jj_oprtns_entry < TO_DATE('${sqlEndDate}', 'YYYY-MM-DD') + 1
@@ -8985,118 +8985,80 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                             OR NVL(dir.custrecord_jj_dir_loss_pieces_info, 0) > 0
                         )
                     `;
-                }
+                    }
 
-                if (location) {
-                    sqlQuery += `
+                    if (location) {
+                        sqlQuery += `
                         AND dept.custrecord_jj_mandept_location IN ('${location}')
                     `;
-                }
-
-                let rawResults;
-                try {
-                    log.debug("getOverallEfficiencyData - Executing SQL", "Query length: " + sqlQuery.length);
-                    rawResults = query.runSuiteQL({ query: sqlQuery }).asMappedResults();
-                    log.debug("getOverallEfficiencyData - Raw results count", rawResults.length);
-                } catch (sqlError) {
-                    throw sqlError;
-                }
-                
-                const groupedData = rawResults.reduce((acc, record) => {
-
-                    const locationId = record.location_id;
-                    const departmentId = record.department_id;
-                    const employeeId = record.employee_id;
-                    const bagName = record.bag_name;
-                    const itemCategory = record.item_category;
-
-                    // Skip only if location or department is missing (employee can be null)
-                    if (!locationId || !departmentId) {
-                        return acc;
                     }
 
-                    const goldProd = parseFloat(record.tmproduction_gold || 0);
-                    const goldLoss = parseFloat(record.loss_gold || 0);
-                    const diaProdCarats = parseFloat(record.tmproduction_diamond_carats || 0);
-                    const diaLossCarats = parseFloat(record.loss_diamond_carats || 0);
-                    const diaProdPieces = parseFloat(record.tmproduction_diamond_pieces || 0);
-                    const diaLossPieces = parseFloat(record.loss_diamond_pieces || 0);
-                    const isRepair = record.is_repair === true || record.is_repair === 'T';
-
-                    // Expense Jewellery - Gold Weight and Diamond Weight from FG Serials
-                    const expenseJewelleryGoldWeight = parseFloat(record.expense_jewellery_gold_weight || 0);
-                    const expenseJewelleryDiamondWeight = parseFloat(record.expense_jewellery_diamond_weight || 0);
-
-                    // Raw direct issue/return fields - separated by class
-                    const dirIssuedQuantityGold = parseFloat(record.dir_issued_quantity_gold || 0);
-                    const dirLossQuantityGold = parseFloat(record.dir_loss_quantity_gold || 0);
-                    const dirStartingQuantityGold = parseFloat(record.dir_starting_quantity_gold || 0);
-                    const dirScrapQuantityGold = parseFloat(record.dir_scrap_quantity_gold || 0);
-                    const dirBalanceQuantityGold = parseFloat(record.dir_balance_quantity_gold || 0);
-
-                    const dirIssuedQuantityDiamond = parseFloat(record.dir_issued_quantity_diamond || 0);
-                    const dirLossQuantityDiamond = parseFloat(record.dir_loss_quantity_diamond || 0);
-                    const dirStartingQuantityDiamond = parseFloat(record.dir_starting_quantity_diamond || 0);
-                    const dirScrapQuantityDiamond = parseFloat(record.dir_scrap_quantity_diamond || 0);
-                    const dirBalanceQuantityDiamond = parseFloat(record.dir_balance_quantity_diamond || 0);
-                    const dirIssuedPiecesDiamond = parseFloat(record.dir_issued_pieces_diamond || 0);
-                    const dirLossPiecesDiamond = parseFloat(record.dir_loss_pieces_diamond || 0);
-
-                    /* LOCATION INIT */
-                    if (!acc[locationId]) {
-                        acc[locationId] = {
-                            location_name: record.location_name,
-                            tmproduction_gold: 0,
-                            loss_gold: 0,
-                            tmproduction_diamond: 0,
-                            loss_diamond: 0,
-                            tmproduction_diamond_pieces: 0,
-                            loss_diamond_pieces: 0,
-                            departments: {}
-                        };
+                    let rawResults;
+                    try {
+                        log.debug("getOverallEfficiencyData - Executing SQL", "Query length: " + sqlQuery.length);
+                        rawResults = query.runSuiteQL({ query: sqlQuery }).asMappedResults();
+                        log.debug("getOverallEfficiencyData - Raw results count", rawResults.length);
+                    } catch (sqlError) {
+                        throw sqlError;
                     }
 
-                    /* DEPARTMENT INIT */
-                    if (!acc[locationId].departments[departmentId]) {
-                        acc[locationId].departments[departmentId] = {
-                            department_name: record.department_name,
-                            production: 0,
-                            loss: 0,
-                            production_diamond: 0,
-                            loss_diamond: 0,
-                            production_diamond_pieces: 0,
-                            loss_diamond_pieces: 0,
-                            issued_quantity_gold: 0,
-                            loss_quantity_gold: 0,
-                            starting_quantity_gold: 0,
-                            scrap_quantity_gold: 0,
-                            balance_quantity_gold: 0,
-                            actual_production_gold: 0,
-                            expense_jewellery_net_weight: 0,
-                            expense_jewellery_diamond_weight: 0,
-                            issued_quantity_diamond: 0,
-                            loss_quantity_diamond: 0,
-                            starting_quantity_diamond: 0,
-                            scrap_quantity_diamond: 0,
-                            balance_quantity_diamond: 0,
-                            actual_production_diamond: 0,
-                            issued_pieces_diamond: 0,
-                            loss_pieces_diamond: 0,
-                            unique_bags: new Set(),
-                            unique_categories: new Set(),
-                            categories: {}, // Store data by category
-                            employees: {}
-                        };
-                    }
+                    const groupedData = rawResults.reduce((acc, record) => {
 
-                    // Track unique categories per department
-                    if (itemCategory) {
-                        acc[locationId].departments[departmentId].unique_categories.add(itemCategory);
-                        
-                        // Initialize category if not exists
-                        if (!acc[locationId].departments[departmentId].categories[itemCategory]) {
-                            acc[locationId].departments[departmentId].categories[itemCategory] = {
-                                category_name: itemCategory,
+                        const locationId = record.location_id;
+                        const departmentId = record.department_id;
+                        const employeeId = record.employee_id;
+                        const bagName = record.bag_name;
+                        const itemCategory = record.item_category;
+
+                        // Skip only if location or department is missing (employee can be null)
+                        if (!locationId || !departmentId) {
+                            return acc;
+                        }
+
+                        const goldProd = parseFloat(record.tmproduction_gold || 0);
+                        const goldLoss = parseFloat(record.loss_gold || 0);
+                        const diaProdCarats = parseFloat(record.tmproduction_diamond_carats || 0);
+                        const diaLossCarats = parseFloat(record.loss_diamond_carats || 0);
+                        const diaProdPieces = parseFloat(record.tmproduction_diamond_pieces || 0);
+                        const diaLossPieces = parseFloat(record.loss_diamond_pieces || 0);
+                        const isRepair = record.is_repair === true || record.is_repair === 'T';
+
+                        // Expense Jewellery - Gold Weight and Diamond Weight from FG Serials
+                        const expenseJewelleryGoldWeight = parseFloat(record.expense_jewellery_gold_weight || 0);
+                        const expenseJewelleryDiamondWeight = parseFloat(record.expense_jewellery_diamond_weight || 0);
+
+                        // Raw direct issue/return fields - separated by class
+                        const dirIssuedQuantityGold = parseFloat(record.dir_issued_quantity_gold || 0);
+                        const dirLossQuantityGold = parseFloat(record.dir_loss_quantity_gold || 0);
+                        const dirStartingQuantityGold = parseFloat(record.dir_starting_quantity_gold || 0);
+                        const dirScrapQuantityGold = parseFloat(record.dir_scrap_quantity_gold || 0);
+                        const dirBalanceQuantityGold = parseFloat(record.dir_balance_quantity_gold || 0);
+                        const dirIssuedQuantityDiamond = parseFloat(record.dir_issued_quantity_diamond || 0);
+                        const dirLossQuantityDiamond = parseFloat(record.dir_loss_quantity_diamond || 0);
+                        const dirStartingQuantityDiamond = parseFloat(record.dir_starting_quantity_diamond || 0);
+                        const dirScrapQuantityDiamond = parseFloat(record.dir_scrap_quantity_diamond || 0);
+                        const dirBalanceQuantityDiamond = parseFloat(record.dir_balance_quantity_diamond || 0);
+                        const dirIssuedPiecesDiamond = parseFloat(record.dir_issued_pieces_diamond || 0);
+                        const dirLossPiecesDiamond = parseFloat(record.dir_loss_pieces_diamond || 0);
+
+                        /* LOCATION INIT */
+                        if (!acc[locationId]) {
+                            acc[locationId] = {
+                                location_name: record.location_name,
+                                tmproduction_gold: 0,
+                                loss_gold: 0,
+                                tmproduction_diamond: 0,
+                                loss_diamond: 0,
+                                tmproduction_diamond_pieces: 0,
+                                loss_diamond_pieces: 0,
+                                departments: {}
+                            };
+                        }
+
+                        /* DEPARTMENT INIT */
+                        if (!acc[locationId].departments[departmentId]) {
+                            acc[locationId].departments[departmentId] = {
+                                department_name: record.department_name,
                                 production: 0,
                                 loss: 0,
                                 production_diamond: 0,
@@ -9118,70 +9080,63 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                                 balance_quantity_diamond: 0,
                                 actual_production_diamond: 0,
                                 issued_pieces_diamond: 0,
-                                loss_pieces_diamond: 0
-                            };
-                        }
-                    }
-
-                    // Only process employee data if employeeId exists
-                    if (employeeId) {
-                        /* EMPLOYEE INIT */
-                        if (!acc[locationId].departments[departmentId].employees[employeeId]) {
-                            const fullName = [record.firstname, record.lastname].filter(Boolean).join(" ");
-                            acc[locationId].departments[departmentId].employees[employeeId] = {
-                                name: fullName || "Unknown Employee",
-                                tmProduction: 0,
-                                tmProductionDiamond: 0,
-                                tmProductionDiamondPieces: 0,
-                                grossLoss: 0,
-                                grossLossDiamond: 0,
-                                grossLossDiamondPieces: 0,
-                                repairLoss: 0,
-                                normalLoss: 0,
-                                issued_quantity_gold: 0,
-                                loss_quantity_gold: 0,
-                                starting_quantity_gold: 0,
-                                scrap_quantity_gold: 0,
-                                balance_quantity_gold: 0,
-                                issued_quantity_diamond: 0,
-                                loss_quantity_diamond: 0,
-                                starting_quantity_diamond: 0,
-                                scrap_quantity_diamond: 0,
-                                balance_quantity_diamond: 0,
-                                issued_pieces_diamond: 0,
                                 loss_pieces_diamond: 0,
                                 unique_bags: new Set(),
                                 unique_categories: new Set(),
-                                categories: {} // Store data by category
+                                categories: {}, // Store data by category
+                                employees: {}
                             };
                         }
 
-                        const emp = acc[locationId].departments[departmentId].employees[employeeId];
-
-                        // Track unique bags per department (only for records with employees)
-                        if (bagName) {
-                            acc[locationId].departments[departmentId].unique_bags.add(bagName);
-                        }
-
-                        // Track unique bags per employee
-                        if (bagName) {
-                            emp.unique_bags.add(bagName);
-                        }
-
-                        // Track unique categories per employee
+                        // Track unique categories per department
                         if (itemCategory) {
-                            emp.unique_categories.add(itemCategory);
-                            
+                            acc[locationId].departments[departmentId].unique_categories.add(itemCategory);
+
                             // Initialize category if not exists
-                            if (!emp.categories[itemCategory]) {
-                                emp.categories[itemCategory] = {
+                            if (!acc[locationId].departments[departmentId].categories[itemCategory]) {
+                                acc[locationId].departments[departmentId].categories[itemCategory] = {
                                     category_name: itemCategory,
+                                    production: 0,
+                                    loss: 0,
+                                    production_diamond: 0,
+                                    loss_diamond: 0,
+                                    production_diamond_pieces: 0,
+                                    loss_diamond_pieces: 0,
+                                    issued_quantity_gold: 0,
+                                    loss_quantity_gold: 0,
+                                    starting_quantity_gold: 0,
+                                    scrap_quantity_gold: 0,
+                                    balance_quantity_gold: 0,
+                                    actual_production_gold: 0,
+                                    expense_jewellery_net_weight: 0,
+                                    expense_jewellery_diamond_weight: 0,
+                                    issued_quantity_diamond: 0,
+                                    loss_quantity_diamond: 0,
+                                    starting_quantity_diamond: 0,
+                                    scrap_quantity_diamond: 0,
+                                    balance_quantity_diamond: 0,
+                                    actual_production_diamond: 0,
+                                    issued_pieces_diamond: 0,
+                                    loss_pieces_diamond: 0
+                                };
+                            }
+                        }
+
+                        // Only process employee data if employeeId exists
+                        if (employeeId) {
+                            /* EMPLOYEE INIT */
+                            if (!acc[locationId].departments[departmentId].employees[employeeId]) {
+                                const fullName = [record.firstname, record.lastname].filter(Boolean).join(" ");
+                                acc[locationId].departments[departmentId].employees[employeeId] = {
+                                    name: fullName || "Unknown Employee",
                                     tmProduction: 0,
                                     tmProductionDiamond: 0,
                                     tmProductionDiamondPieces: 0,
                                     grossLoss: 0,
                                     grossLossDiamond: 0,
                                     grossLossDiamondPieces: 0,
+                                    repairLoss: 0,
+                                    normalLoss: 0,
                                     issued_quantity_gold: 0,
                                     loss_quantity_gold: 0,
                                     starting_quantity_gold: 0,
@@ -9193,219 +9148,263 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                                     scrap_quantity_diamond: 0,
                                     balance_quantity_diamond: 0,
                                     issued_pieces_diamond: 0,
-                                    loss_pieces_diamond: 0
+                                    loss_pieces_diamond: 0,
+                                    unique_bags: new Set(),
+                                    unique_categories: new Set(),
+                                    categories: {} // Store data by category
                                 };
                             }
 
-                            const empCat = emp.categories[itemCategory];
-                            
-                            // Aggregate category totals
-                            empCat.tmProduction += goldProd;
-                            empCat.tmProductionDiamond += diaProdCarats;
-                            empCat.tmProductionDiamondPieces += diaProdPieces;
-                            empCat.grossLoss += goldLoss;
-                            empCat.grossLossDiamond += diaLossCarats;
-                            empCat.grossLossDiamondPieces += diaLossPieces;
-                            
-                            empCat.issued_quantity_gold += dirIssuedQuantityGold;
-                            empCat.loss_quantity_gold += dirLossQuantityGold;
-                            empCat.starting_quantity_gold += dirStartingQuantityGold;
-                            empCat.scrap_quantity_gold += dirScrapQuantityGold;
-                            empCat.balance_quantity_gold += dirBalanceQuantityGold;
-                            
-                            empCat.issued_quantity_diamond += dirIssuedQuantityDiamond;
-                            empCat.loss_quantity_diamond += dirLossQuantityDiamond;
-                            empCat.starting_quantity_diamond += dirStartingQuantityDiamond;
-                            empCat.scrap_quantity_diamond += dirScrapQuantityDiamond;
-                            empCat.balance_quantity_diamond += dirBalanceQuantityDiamond;
-                            empCat.issued_pieces_diamond += dirIssuedPiecesDiamond;
-                            empCat.loss_pieces_diamond += dirLossPiecesDiamond;
+                            const emp = acc[locationId].departments[departmentId].employees[employeeId];
+
+                            // Track unique bags per department (only for records with employees)
+                            if (bagName) {
+                                acc[locationId].departments[departmentId].unique_bags.add(bagName);
+                            }
+
+                            // Track unique bags per employee
+                            if (bagName) {
+                                emp.unique_bags.add(bagName);
+                            }
+
+                            // Track unique categories per employee
+                            if (itemCategory) {
+                                emp.unique_categories.add(itemCategory);
+
+                                // Initialize category if not exists
+                                if (!emp.categories[itemCategory]) {
+                                    emp.categories[itemCategory] = {
+                                        category_name: itemCategory,
+                                        tmProduction: 0,
+                                        tmProductionDiamond: 0,
+                                        tmProductionDiamondPieces: 0,
+                                        grossLoss: 0,
+                                        grossLossDiamond: 0,
+                                        grossLossDiamondPieces: 0,
+                                        issued_quantity_gold: 0,
+                                        loss_quantity_gold: 0,
+                                        starting_quantity_gold: 0,
+                                        scrap_quantity_gold: 0,
+                                        balance_quantity_gold: 0,
+                                        issued_quantity_diamond: 0,
+                                        loss_quantity_diamond: 0,
+                                        starting_quantity_diamond: 0,
+                                        scrap_quantity_diamond: 0,
+                                        balance_quantity_diamond: 0,
+                                        issued_pieces_diamond: 0,
+                                        loss_pieces_diamond: 0
+                                    };
+                                }
+
+                                const empCat = emp.categories[itemCategory];
+
+                                // Aggregate category totals
+                                empCat.tmProduction += goldProd;
+                                empCat.tmProductionDiamond += diaProdCarats;
+                                empCat.tmProductionDiamondPieces += diaProdPieces;
+                                empCat.grossLoss += goldLoss;
+                                empCat.grossLossDiamond += diaLossCarats;
+                                empCat.grossLossDiamondPieces += diaLossPieces;
+
+                                empCat.issued_quantity_gold += dirIssuedQuantityGold;
+                                empCat.loss_quantity_gold += dirLossQuantityGold;
+                                empCat.starting_quantity_gold += dirStartingQuantityGold;
+                                empCat.scrap_quantity_gold += dirScrapQuantityGold;
+                                empCat.balance_quantity_gold += dirBalanceQuantityGold;
+
+                                empCat.issued_quantity_diamond += dirIssuedQuantityDiamond;
+                                empCat.loss_quantity_diamond += dirLossQuantityDiamond;
+                                empCat.starting_quantity_diamond += dirStartingQuantityDiamond;
+                                empCat.scrap_quantity_diamond += dirScrapQuantityDiamond;
+                                empCat.balance_quantity_diamond += dirBalanceQuantityDiamond;
+                                empCat.issued_pieces_diamond += dirIssuedPiecesDiamond;
+                                empCat.loss_pieces_diamond += dirLossPiecesDiamond;
+                            }
+
+                            /* EMPLOYEE TOTALS */
+                            emp.tmProduction += goldProd;
+                            emp.tmProductionDiamond += diaProdCarats;
+                            emp.tmProductionDiamondPieces += diaProdPieces;
+                            emp.grossLoss += goldLoss;
+                            emp.grossLossDiamond += diaLossCarats;
+                            emp.grossLossDiamondPieces += diaLossPieces;
+
+                            // Raw quantities separated by class
+                            emp.issued_quantity_gold += dirIssuedQuantityGold;
+                            emp.loss_quantity_gold += dirLossQuantityGold;
+                            emp.starting_quantity_gold += dirStartingQuantityGold;
+                            emp.scrap_quantity_gold += dirScrapQuantityGold;
+                            emp.balance_quantity_gold += dirBalanceQuantityGold;
+
+                            emp.issued_quantity_diamond += dirIssuedQuantityDiamond;
+                            emp.loss_quantity_diamond += dirLossQuantityDiamond;
+                            emp.starting_quantity_diamond += dirStartingQuantityDiamond;
+                            emp.scrap_quantity_diamond += dirScrapQuantityDiamond;
+                            emp.balance_quantity_diamond += dirBalanceQuantityDiamond;
+                            emp.issued_pieces_diamond += dirIssuedPiecesDiamond;
+                            emp.loss_pieces_diamond += dirLossPiecesDiamond;
+
+                            if (isRepair) {
+                                emp.repairLoss += goldLoss;
+                            } else {
+                                emp.normalLoss += goldLoss;
+                            }
                         }
 
-                        /* EMPLOYEE TOTALS */
-                        emp.tmProduction += goldProd;
-                        emp.tmProductionDiamond += diaProdCarats;
-                        emp.tmProductionDiamondPieces += diaProdPieces;
-                        emp.grossLoss += goldLoss;
-                        emp.grossLossDiamond += diaLossCarats;
-                        emp.grossLossDiamondPieces += diaLossPieces;
-                        
-                        // Raw quantities separated by class
-                        emp.issued_quantity_gold += dirIssuedQuantityGold;
-                        emp.loss_quantity_gold += dirLossQuantityGold;
-                        emp.starting_quantity_gold += dirStartingQuantityGold;
-                        emp.scrap_quantity_gold += dirScrapQuantityGold;
-                        emp.balance_quantity_gold += dirBalanceQuantityGold;
-                        
-                        emp.issued_quantity_diamond += dirIssuedQuantityDiamond;
-                        emp.loss_quantity_diamond += dirLossQuantityDiamond;
-                        emp.starting_quantity_diamond += dirStartingQuantityDiamond;
-                        emp.scrap_quantity_diamond += dirScrapQuantityDiamond;
-                        emp.balance_quantity_diamond += dirBalanceQuantityDiamond;
-                        emp.issued_pieces_diamond += dirIssuedPiecesDiamond;
-                        emp.loss_pieces_diamond += dirLossPiecesDiamond;
+                        const dept = acc[locationId].departments[departmentId];
+                        const loc = acc[locationId];
 
-                        if (isRepair) {
-                            emp.repairLoss += goldLoss;
-                        } else {
-                            emp.normalLoss += goldLoss;
-                        }
-                    }
+                        /* DEPARTMENT TOTALS */
+                        dept.production += goldProd;
+                        dept.loss += goldLoss;
+                        dept.production_diamond += diaProdCarats;
+                        dept.loss_diamond += diaLossCarats;
+                        dept.production_diamond_pieces += diaProdPieces;
+                        dept.loss_diamond_pieces += diaLossPieces;
 
-                    const dept = acc[locationId].departments[departmentId];
-                    const loc = acc[locationId];
+                        // Raw quantities separated by class (no pieces for gold)
+                        dept.issued_quantity_gold += dirIssuedQuantityGold;
+                        dept.loss_quantity_gold += dirLossQuantityGold;
+                        dept.starting_quantity_gold += dirStartingQuantityGold;
+                        dept.scrap_quantity_gold += dirScrapQuantityGold;
+                        dept.balance_quantity_gold += dirBalanceQuantityGold;
 
-                    /* DEPARTMENT TOTALS */
-                    dept.production += goldProd;
-                    dept.loss += goldLoss;
-                    dept.production_diamond += diaProdCarats;
-                    dept.loss_diamond += diaLossCarats;
-                    dept.production_diamond_pieces += diaProdPieces;
-                    dept.loss_diamond_pieces += diaLossPieces;
-                    
-                    // Raw quantities separated by class (no pieces for gold)
-                    dept.issued_quantity_gold += dirIssuedQuantityGold;
-                    dept.loss_quantity_gold += dirLossQuantityGold;
-                    dept.starting_quantity_gold += dirStartingQuantityGold;
-                    dept.scrap_quantity_gold += dirScrapQuantityGold;
-                    dept.balance_quantity_gold += dirBalanceQuantityGold;
-                    
-                    dept.issued_quantity_diamond += dirIssuedQuantityDiamond;
-                    dept.loss_quantity_diamond += dirLossQuantityDiamond;
-                    dept.starting_quantity_diamond += dirStartingQuantityDiamond;
-                    dept.scrap_quantity_diamond += dirScrapQuantityDiamond;
-                    dept.balance_quantity_diamond += dirBalanceQuantityDiamond;
-                    dept.issued_pieces_diamond += dirIssuedPiecesDiamond;
-                    dept.loss_pieces_diamond += dirLossPiecesDiamond;
-                    
-                    // Expense Jewellery - Gold Weight and Diamond Weight
-                    dept.expense_jewellery_net_weight += expenseJewelleryGoldWeight;
-                    dept.expense_jewellery_diamond_weight += expenseJewelleryDiamondWeight;
+                        dept.issued_quantity_diamond += dirIssuedQuantityDiamond;
+                        dept.loss_quantity_diamond += dirLossQuantityDiamond;
+                        dept.starting_quantity_diamond += dirStartingQuantityDiamond;
+                        dept.scrap_quantity_diamond += dirScrapQuantityDiamond;
+                        dept.balance_quantity_diamond += dirBalanceQuantityDiamond;
+                        dept.issued_pieces_diamond += dirIssuedPiecesDiamond;
+                        dept.loss_pieces_diamond += dirLossPiecesDiamond;
 
-                    /* CATEGORY TOTALS */
-                    if (itemCategory && dept.categories[itemCategory]) {
-                        const cat = dept.categories[itemCategory];
-                        cat.production += goldProd;
-                        cat.loss += goldLoss;
-                        cat.production_diamond += diaProdCarats;
-                        cat.loss_diamond += diaLossCarats;
-                        cat.production_diamond_pieces += diaProdPieces;
-                        cat.loss_diamond_pieces += diaLossPieces;
-                        cat.issued_quantity_gold += dirIssuedQuantityGold;
-                        cat.loss_quantity_gold += dirLossQuantityGold;
-                        cat.starting_quantity_gold += dirStartingQuantityGold;
-                        cat.scrap_quantity_gold += dirScrapQuantityGold;
-                        cat.balance_quantity_gold += dirBalanceQuantityGold;
-                        cat.issued_quantity_diamond += dirIssuedQuantityDiamond;
-                        cat.loss_quantity_diamond += dirLossQuantityDiamond;
-                        cat.starting_quantity_diamond += dirStartingQuantityDiamond;
-                        cat.scrap_quantity_diamond += dirScrapQuantityDiamond;
-                        cat.balance_quantity_diamond += dirBalanceQuantityDiamond;
-                        cat.issued_pieces_diamond += dirIssuedPiecesDiamond;
-                        cat.loss_pieces_diamond += dirLossPiecesDiamond;
-                        
                         // Expense Jewellery - Gold Weight and Diamond Weight
-                        cat.expense_jewellery_net_weight += expenseJewelleryGoldWeight;
-                        cat.expense_jewellery_diamond_weight += expenseJewelleryDiamondWeight;
-                    }
+                        dept.expense_jewellery_net_weight += expenseJewelleryGoldWeight;
+                        dept.expense_jewellery_diamond_weight += expenseJewelleryDiamondWeight;
 
-                    /* LOCATION TOTALS */
-                    loc.tmproduction_gold += goldProd;
-                    loc.loss_gold += goldLoss;
-                    loc.tmproduction_diamond += diaProdCarats;
-                    loc.loss_diamond += diaLossCarats;
-                    loc.tmproduction_diamond_pieces += diaProdPieces;
-                    loc.loss_diamond_pieces += diaLossPieces;
-                    return acc;
+                        /* CATEGORY TOTALS */
+                        if (itemCategory && dept.categories[itemCategory]) {
+                            const cat = dept.categories[itemCategory];
+                            cat.production += goldProd;
+                            cat.loss += goldLoss;
+                            cat.production_diamond += diaProdCarats;
+                            cat.loss_diamond += diaLossCarats;
+                            cat.production_diamond_pieces += diaProdPieces;
+                            cat.loss_diamond_pieces += diaLossPieces;
+                            cat.issued_quantity_gold += dirIssuedQuantityGold;
+                            cat.loss_quantity_gold += dirLossQuantityGold;
+                            cat.starting_quantity_gold += dirStartingQuantityGold;
+                            cat.scrap_quantity_gold += dirScrapQuantityGold;
+                            cat.balance_quantity_gold += dirBalanceQuantityGold;
+                            cat.issued_quantity_diamond += dirIssuedQuantityDiamond;
+                            cat.loss_quantity_diamond += dirLossQuantityDiamond;
+                            cat.starting_quantity_diamond += dirStartingQuantityDiamond;
+                            cat.scrap_quantity_diamond += dirScrapQuantityDiamond;
+                            cat.balance_quantity_diamond += dirBalanceQuantityDiamond;
+                            cat.issued_pieces_diamond += dirIssuedPiecesDiamond;
+                            cat.loss_pieces_diamond += dirLossPiecesDiamond;
 
-                }, {});
+                            // Expense Jewellery - Gold Weight and Diamond Weight
+                            cat.expense_jewellery_net_weight += expenseJewelleryGoldWeight;
+                            cat.expense_jewellery_diamond_weight += expenseJewelleryDiamondWeight;
+                        }
 
-                // Convert Set to count for bag_count and prepare categories array
-                try {
-                    Object.keys(groupedData).forEach(locationId => {
-                        const location = groupedData[locationId];
-                        
-                        Object.keys(location.departments || {}).forEach(deptId => {
-                            const dept = location.departments[deptId];
-                            
-                            // Process employees first to get their bag counts
-                            Object.values(dept.employees || {}).forEach(emp => {
-                                // Convert employee categories to array and calculate actual production
-                                if (emp.categories && typeof emp.categories === 'object') {
-                                    emp.categories_array = Object.values(emp.categories).map(cat => {
-                                        // Calculate actual production for employee category
-                                        cat.actual_production_gold = cat.starting_quantity_gold + cat.issued_quantity_gold - cat.loss_quantity_gold - cat.scrap_quantity_gold - cat.balance_quantity_gold;
-                                        cat.actual_production_diamond = cat.starting_quantity_diamond + cat.issued_quantity_diamond - cat.loss_quantity_diamond - cat.scrap_quantity_diamond - cat.balance_quantity_diamond;
+                        /* LOCATION TOTALS */
+                        loc.tmproduction_gold += goldProd;
+                        loc.loss_gold += goldLoss;
+                        loc.tmproduction_diamond += diaProdCarats;
+                        loc.loss_diamond += diaLossCarats;
+                        loc.tmproduction_diamond_pieces += diaProdPieces;
+                        loc.loss_diamond_pieces += diaLossPieces;
+                        return acc;
+
+                    }, {});
+
+                    // Convert Set to count for bag_count and prepare categories array
+                    try {
+                        Object.keys(groupedData).forEach(locationId => {
+                            const location = groupedData[locationId];
+
+                            Object.keys(location.departments || {}).forEach(deptId => {
+                                const dept = location.departments[deptId];
+
+                                // Process employees first to get their bag counts
+                                Object.values(dept.employees || {}).forEach(emp => {
+                                    // Convert employee categories to array and calculate actual production
+                                    if (emp.categories && typeof emp.categories === 'object') {
+                                        emp.categories_array = Object.values(emp.categories).map(cat => {
+                                            // Calculate actual production for employee category
+                                            cat.actual_production_gold = cat.starting_quantity_gold + cat.issued_quantity_gold - cat.loss_quantity_gold - cat.scrap_quantity_gold - cat.balance_quantity_gold;
+                                            cat.actual_production_diamond = cat.starting_quantity_diamond + cat.issued_quantity_diamond - cat.loss_quantity_diamond - cat.scrap_quantity_diamond - cat.balance_quantity_diamond;
+                                            return cat;
+                                        });
+                                    } else {
+                                        emp.categories_array = [];
+                                    }
+
+                                    // Convert unique_bags Set to count
+                                    emp.bag_count = emp.unique_bags ? emp.unique_bags.size : 0;
+
+                                    // Convert unique_categories Set to count
+                                    emp.category_count = emp.unique_categories ? emp.unique_categories.size : 0;
+
+                                    // Remove non-serializable objects from employee
+                                    delete emp.unique_bags;
+                                    delete emp.unique_categories;
+                                    delete emp.categories;
+                                });
+
+                                // Calculate department bag count as sum of employee bag counts
+                                dept.bag_count = Object.values(dept.employees || {}).reduce((sum, emp) => sum + (emp.bag_count || 0), 0);
+                                dept.category_count = (dept.unique_categories && dept.unique_categories.size) ? dept.unique_categories.size : 0;
+
+                                // Calculate actual production for department
+                                // Formula: starting qty + issued qty - loss qty - scrap qty - balance qty
+                                // For Expense Jewellery, use gold/diamond weight if available
+                                dept.actual_production_gold = dept.expense_jewellery_net_weight > 0
+                                    ? dept.expense_jewellery_net_weight
+                                    : (dept.starting_quantity_gold + dept.issued_quantity_gold - dept.loss_quantity_gold - dept.scrap_quantity_gold - dept.balance_quantity_gold);
+                                dept.actual_production_diamond = dept.expense_jewellery_diamond_weight > 0
+                                    ? dept.expense_jewellery_diamond_weight
+                                    : (dept.starting_quantity_diamond + dept.issued_quantity_diamond - dept.loss_quantity_diamond - dept.scrap_quantity_diamond - dept.balance_quantity_diamond);
+
+                                // Convert categories object to array and calculate actual production for each category
+                                if (dept.categories && typeof dept.categories === 'object') {
+                                    dept.categories_array = Object.values(dept.categories).map(cat => {
+                                        // Calculate actual production for category
+                                        // For Expense Jewellery, use gold/diamond weight if available
+                                        cat.actual_production_gold = cat.expense_jewellery_net_weight > 0
+                                            ? cat.expense_jewellery_net_weight
+                                            : (cat.starting_quantity_gold + cat.issued_quantity_gold - cat.loss_quantity_gold - cat.scrap_quantity_gold - cat.balance_quantity_gold);
+                                        cat.actual_production_diamond = cat.expense_jewellery_diamond_weight > 0
+                                            ? cat.expense_jewellery_diamond_weight
+                                            : (cat.starting_quantity_diamond + cat.issued_quantity_diamond - cat.loss_quantity_diamond - cat.scrap_quantity_diamond - cat.balance_quantity_diamond);
                                         return cat;
                                     });
                                 } else {
-                                    emp.categories_array = [];
+                                    dept.categories_array = [];
                                 }
-                                
-                                // Convert unique_bags Set to count
-                                emp.bag_count = emp.unique_bags ? emp.unique_bags.size : 0;
-                                
-                                // Convert unique_categories Set to count
-                                emp.category_count = emp.unique_categories ? emp.unique_categories.size : 0;
-                                
-                                // Remove non-serializable objects from employee
-                                delete emp.unique_bags;
-                                delete emp.unique_categories;
-                                delete emp.categories;
+
+                                // Remove non-serializable objects
+                                delete dept.unique_bags;
+                                delete dept.unique_categories;
+                                delete dept.categories;
                             });
-                            
-                            // Calculate department bag count as sum of employee bag counts
-                            dept.bag_count = Object.values(dept.employees || {}).reduce((sum, emp) => sum + (emp.bag_count || 0), 0);
-                            dept.category_count = (dept.unique_categories && dept.unique_categories.size) ? dept.unique_categories.size : 0;
-                            
-                            // Calculate actual production for department
-                            // Formula: starting qty + issued qty - loss qty - scrap qty - balance qty
-                            // For Expense Jewellery, use gold/diamond weight if available
-                            dept.actual_production_gold = dept.expense_jewellery_net_weight > 0 
-                                ? dept.expense_jewellery_net_weight 
-                                : (dept.starting_quantity_gold + dept.issued_quantity_gold - dept.loss_quantity_gold - dept.scrap_quantity_gold - dept.balance_quantity_gold);
-                            dept.actual_production_diamond = dept.expense_jewellery_diamond_weight > 0 
-                                ? dept.expense_jewellery_diamond_weight 
-                                : (dept.starting_quantity_diamond + dept.issued_quantity_diamond - dept.loss_quantity_diamond - dept.scrap_quantity_diamond - dept.balance_quantity_diamond);
-                            
-                            // Convert categories object to array and calculate actual production for each category
-                            if (dept.categories && typeof dept.categories === 'object') {
-                                dept.categories_array = Object.values(dept.categories).map(cat => {
-                                    // Calculate actual production for category
-                                    // For Expense Jewellery, use gold/diamond weight if available
-                                    cat.actual_production_gold = cat.expense_jewellery_net_weight > 0 
-                                        ? cat.expense_jewellery_net_weight 
-                                        : (cat.starting_quantity_gold + cat.issued_quantity_gold - cat.loss_quantity_gold - cat.scrap_quantity_gold - cat.balance_quantity_gold);
-                                    cat.actual_production_diamond = cat.expense_jewellery_diamond_weight > 0 
-                                        ? cat.expense_jewellery_diamond_weight 
-                                        : (cat.starting_quantity_diamond + cat.issued_quantity_diamond - cat.loss_quantity_diamond - cat.scrap_quantity_diamond - cat.balance_quantity_diamond);
-                                    return cat;
-                                });
-                            } else {
-                                dept.categories_array = [];
-                            }
-                            
-                            // Remove non-serializable objects
-                            delete dept.unique_bags;
-                            delete dept.unique_categories;
-                            delete dept.categories;
                         });
-                    });
-                    
-                    // Test JSON serialization
-                    JSON.stringify(groupedData);
-                    
-                    log.debug("getOverallEfficiencyData - Cleanup successful", "Data cleaned and serializable");
-                    
-                } catch (e) {
-                    log.error("Error cleaning up groupedData", e.toString());
-                    log.error("Error stack", e.stack);
-                }
 
-                log.debug("getOverallEfficiencyData - Returning data", "Location count: " + Object.keys(groupedData).length);
+                        // Test JSON serialization
+                        JSON.stringify(groupedData);
 
-                return groupedData;
-                
+                        log.debug("getOverallEfficiencyData - Cleanup successful", "Data cleaned and serializable");
+
+                    } catch (e) {
+                        log.error("Error cleaning up groupedData", e.toString());
+                        log.error("Error stack", e.stack);
+                    }
+
+                    log.debug("getOverallEfficiencyData - Returning data", "Location count: " + Object.keys(groupedData).length);
+
+                    return groupedData;
+
                 } catch (error) {
                     log.error("getOverallEfficiencyData - Fatal Error", error.toString());
                     log.error("getOverallEfficiencyData - Error Stack", error.stack);
@@ -12450,6 +12449,56 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                 } catch (e) {
                     log.error('getSerialInventoryDetails ERROR', e);
                     return { status: 'ERROR', reason: e.message || 'Failed to retrieve serial inventory details', data: null };
+                }
+            },
+
+            getSerialsType() {
+                try {
+
+                    const serialTypes = [];
+
+                    const serialTypeSearch = search.create({
+                        type: 'customlist_jj_serial_type',
+                        filters: [
+                            ['isinactive', 'is', 'F']
+                        ],
+                        columns: [
+                            search.createColumn({ name: 'internalid' }),
+                            search.createColumn({ name: 'name' })
+                        ]
+                    });
+
+                    serialTypeSearch.run().each(result => {
+
+                        serialTypes.push({
+                            internalid: result.getValue({ name: 'internalid' }),
+                            name: result.getValue({ name: 'name' })
+                        });
+
+                        return true; // continue iteration
+                    });
+
+                    if (serialTypes.length === 0) {
+                        return {
+                            status: 'ERROR',
+                            reason: 'No active serial types found',
+                            data: []
+                        };
+                    }
+
+                    return {
+                        status: 'SUCCESS',
+                        reason: `Found ${serialTypes.length} serial type record(s)`,
+                        data: serialTypes
+                    };
+
+                } catch (e) {
+                    log.error('getSerialsType ERROR', e);
+                    return {
+                        status: 'ERROR',
+                        reason: e.message || 'Failed to retrieve serial types',
+                        data: null
+                    };
                 }
             }
         };
