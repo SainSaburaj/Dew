@@ -8726,15 +8726,17 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                         return dateStr;
                     };
 
+                    // Build upon the EXACT working bagCountQuery structure
+                    // Start with: CUSTOMRECORD_JJ_OPERATIONS op → bag → dept (same order as bagCountQuery)
                     let sqlQuery = `
                     SELECT 
                         BUILTIN_RESULT.TYPE_STRING(op.name) AS operation_id,
                         BUILTIN_RESULT.TYPE_BOOLEAN(op.custrecord_jj_repair_order) AS is_repair,
 
-                        BUILTIN_RESULT.TYPE_INTEGER(dept.id_join) AS department_id,
+                        BUILTIN_RESULT.TYPE_INTEGER(dept.ID) AS department_id,
                         BUILTIN_RESULT.TYPE_STRING(dept.name) AS department_name,
                         BUILTIN_RESULT.TYPE_INTEGER(dept.custrecord_jj_mandept_location) AS location_id,
-                        BUILTIN_RESULT.TYPE_STRING(dept.name_0) AS location_name,
+                        BUILTIN_RESULT.TYPE_STRING(loc.name) AS location_name,
 
                         BUILTIN_RESULT.TYPE_INTEGER(emp.ID) AS employee_id,
                         BUILTIN_RESULT.TYPE_STRING(emp.firstname) AS firstname,
@@ -8742,11 +8744,10 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
 
                         BUILTIN_RESULT.TYPE_INTEGER(item.class) AS item_class,
                         
-                        BUILTIN_RESULT.TYPE_STRING(bag.name) AS bag_name,
-                        BUILTIN_RESULT.TYPE_STRING(BUILTIN.DF(printdesign.custitem_jj_category)) AS item_category,
+                        BUILTIN_RESULT.TYPE_STRING(NVL(bag.altname, bag.name)) AS bag_name,
+                        BUILTIN_RESULT.TYPE_STRING(cat.name) AS item_category,
 
                         /* Raw Direct Issue/Return Fields - Separated by Class */
-                        /* GOLD - Raw Issued/Loss Quantities (no pieces for gold) */
                         BUILTIN_RESULT.TYPE_FLOAT(
                             CASE 
                                 WHEN item.class IN (${GOLD_CLASS_IDS.join(',')}) THEN
@@ -8787,7 +8788,6 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                             END
                         ) AS dir_balance_quantity_gold,
 
-                        /* DIAMOND - Raw Issued/Loss Quantities and Pieces */
                         BUILTIN_RESULT.TYPE_FLOAT(
                             CASE 
                                 WHEN item.class = ${DIAMOND_ID} THEN
@@ -8844,11 +8844,9 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                             END
                         ) AS dir_loss_pieces_diamond,
 
-                        /* EXPENSE JEWELLERY - Gold Weight and Diamond Weight from FG Serials */
-                        BUILTIN_RESULT.TYPE_FLOAT(NVL(fgserials.custrecord_jj_fgs_gold_weight, 0)) AS expense_jewellery_gold_weight,
-                        BUILTIN_RESULT.TYPE_FLOAT(NVL(fgserials.custrecord_jj_fgs_diamond_weight, 0)) AS expense_jewellery_diamond_weight,
+                        BUILTIN_RESULT.TYPE_FLOAT(NVL(fgser_agg.fgs_gold_weight, 0)) AS expense_jewellery_gold_weight,
+                        BUILTIN_RESULT.TYPE_FLOAT(NVL(fgser_agg.fgs_diamond_weight, 0)) AS expense_jewellery_diamond_weight,
 
-                        /* GOLD - Quantity in grams */
                         BUILTIN_RESULT.TYPE_FLOAT(
                             CASE 
                                 WHEN item.class IN (${GOLD_CLASS_IDS.join(',')}) THEN
@@ -8865,7 +8863,6 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                             END
                         ) AS loss_gold,
 
-                        /* DIAMOND - Quantity in carats */
                         BUILTIN_RESULT.TYPE_FLOAT(
                             CASE 
                                 WHEN item.class = ${DIAMOND_ID} THEN
@@ -8882,7 +8879,6 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                             END
                         ) AS loss_diamond_carats,
 
-                        /* GOLD - Pieces */
                         BUILTIN_RESULT.TYPE_FLOAT(
                             CASE 
                                 WHEN item.class IN (${GOLD_CLASS_IDS.join(',')}) THEN
@@ -8899,7 +8895,6 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                             END
                         ) AS loss_gold_pieces,
 
-                        /* DIAMOND - Pieces */
                         BUILTIN_RESULT.TYPE_FLOAT(
                             CASE 
                                 WHEN item.class = ${DIAMOND_ID} THEN
@@ -8917,61 +8912,59 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                         ) AS loss_diamond_pieces
 
                     FROM CUSTOMRECORD_JJ_OPERATIONS op
-
-                    LEFT JOIN CUSTOMRECORD_JJ_DIRECT_ISSUE_RETURN dir
-                        ON dir.custrecord_jj_operations = op.ID
-
-                    LEFT JOIN item
-                        ON dir.custrecord_jj_component = item.ID
-
-                    LEFT JOIN (
-                        SELECT 
-                            d.ID AS id_join,
-                            d.name,
-                            d.custrecord_jj_mandept_location,
-                            loc.name AS name_0,
-                            d.isinactive AS isinactive_crit,
-                            loc.isinactive AS isinactive_crit_0
-                        FROM CUSTOMRECORD_JJ_MANUFACTURING_DEPT d
-                        LEFT JOIN LOCATION loc
-                            ON d.custrecord_jj_mandept_location = loc.ID
-                    ) dept
-                        ON op.custrecord_jj_oprtns_department = dept.id_join
-
-                    LEFT JOIN employee emp
-                        ON op.custrecord_jj_oprtns_employee = emp.ID
-
                     LEFT JOIN CUSTOMRECORD_JJ_BAG_GENERATION bag
                         ON op.custrecord_jj_oprtns_bagno = bag.ID
-
+                    LEFT JOIN CUSTOMRECORD_JJ_MANUFACTURING_DEPT dept
+                        ON op.custrecord_jj_oprtns_department = dept.ID
+                    LEFT JOIN LOCATION loc
+                        ON dept.custrecord_jj_mandept_location = loc.ID
+                    LEFT JOIN employee emp
+                        ON op.custrecord_jj_oprtns_employee = emp.ID
                     LEFT JOIN CUSTOMRECORD_JJ_BAG_CORE_TRACKING bagcore
                         ON bag.custrecord_jj_baggen_bagcore = bagcore.ID
-
-                    LEFT JOIN item printdesign
-                        ON bagcore.custrecord_jj_bagcore_kt_col = printdesign.ID
-
-                    LEFT JOIN CUSTOMRECORD_JJ_BAGCORE_MATERIALS bagcorematerial
-                        ON dir.custrecord_jj_bag_core_material_record = bagcorematerial.ID
-
-                    LEFT JOIN CUSTOMRECORD_JJ_BAG_LOT_DETAILS baglotdetails
-                        ON bagcorematerial.ID = baglotdetails.custrecord_jj_bag_core_material
-
-                    LEFT JOIN inventoryNumber seriallot
-                        ON baglotdetails.custrecord_jj_lot_number = seriallot.ID
-
-                    LEFT JOIN CUSTOMRECORD_JJ_FG_SERIALS fgserials
-                        ON seriallot.ID = fgserials.custrecord_jj_fgs_serial
-
-                    WHERE
-                        NVL(op.isinactive, 'F') = 'F'
+                    LEFT JOIN item item_kt
+                        ON bagcore.custrecord_jj_bagcore_kt_col = item_kt.ID
+                    LEFT JOIN CUSTOMRECORD_JJ_CATEGORY cat
+                        ON item_kt.custitem_jj_category = cat.ID
+                    LEFT JOIN CUSTOMRECORD_JJ_DIRECT_ISSUE_RETURN dir
+                        ON op.ID = dir.custrecord_jj_operations
+                    LEFT JOIN item
+                        ON dir.custrecord_jj_component = item.ID
+                    LEFT JOIN (
+                        SELECT 
+                            bagcore_mat.ID AS bagcore_id,
+                            SUM(NVL(fgs.custrecord_jj_fgs_gold_weight, 0)) AS fgs_gold_weight,
+                            SUM(NVL(fgs.custrecord_jj_fgs_diamond_weight, 0)) AS fgs_diamond_weight
+                        FROM CUSTOMRECORD_JJ_BAGCORE_MATERIALS bagcore_mat
+                        LEFT JOIN CUSTOMRECORD_JJ_BAG_LOT_DETAILS lotdet
+                            ON bagcore_mat.ID = lotdet.custrecord_jj_bag_core_material
+                        LEFT JOIN inventoryNumber inv
+                            ON lotdet.custrecord_jj_lot_number = inv.ID
+                        LEFT JOIN CUSTOMRECORD_JJ_FG_SERIALS fgs
+                            ON inv.ID = fgs.custrecord_jj_fgs_serial
+                        GROUP BY bagcore_mat.ID
+                    ) fgser_agg
+                        ON dir.custrecord_jj_bag_core_material_record = fgser_agg.bagcore_id
+                    WHERE (bag.name IS NOT NULL OR bag.altname IS NOT NULL)
+                        AND NVL(op.isinactive, 'F') = 'F'
+                        AND NVL(dept.isinactive, 'F') = 'F'
                         AND NVL(emp.isinactive, 'F') = 'F'
-                        AND NVL(dept.isinactive_crit, 'F') = 'F'
+                        AND (
+                            NVL(dir.custrecord_jj_issued_quantity, 0) > 0
+                            OR NVL(dir.custrecord_jj_dir_loss_quantity, 0) > 0
+                            OR NVL(dir.custrecord_jj_dir_issued_pieces_info, 0) > 0
+                            OR NVL(dir.custrecord_jj_dir_loss_pieces_info, 0) > 0
+                            OR NVL(dir.custrecord_jj_dir_starting_qty, 0) > 0
+                        )
                 `;
 
 
                     if (formattedStartDate && formattedEndDate) {
                         const sqlStartDate = formatDateToString(formattedStartDate);
                         const sqlEndDate = formatDateToString(formattedEndDate);
+
+                        log.debug("getOverallEfficiencyData - Input Parameters", 
+                            `User selected dates - Start: ${sqlStartDate} (type: ${typeof sqlStartDate}), End: ${sqlEndDate} (type: ${typeof sqlEndDate})`);
 
                         sqlQuery += `
                         AND (
@@ -8986,6 +8979,9 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                             OR NVL(dir.custrecord_jj_dir_starting_qty, 0) > 0
                         )
                     `;
+
+                        log.debug("getOverallEfficiencyData - SQL Date Filter", 
+                            `Date range in query: ${sqlStartDate} to ${sqlEndDate}`);
                     }
 
                     if (location) {
@@ -9012,13 +9008,13 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                         let bagCountQuery = `
                             SELECT DISTINCT
                                 BUILTIN_RESULT.TYPE_INTEGER(dept.ID) AS department_id,
-                                BUILTIN_RESULT.TYPE_STRING(bag.name) AS bag_name
+                                BUILTIN_RESULT.TYPE_STRING(NVL(bag.altname, bag.name)) AS bag_name
                             FROM CUSTOMRECORD_JJ_OPERATIONS op
                             LEFT JOIN CUSTOMRECORD_JJ_BAG_GENERATION bag
                                 ON op.custrecord_jj_oprtns_bagno = bag.ID
                             LEFT JOIN CUSTOMRECORD_JJ_MANUFACTURING_DEPT dept
                                 ON op.custrecord_jj_oprtns_department = dept.ID
-                            WHERE bag.name IS NOT NULL
+                            WHERE (bag.name IS NOT NULL OR bag.altname IS NOT NULL)
                                 AND NVL(op.isinactive, 'F') = 'F'
                                 AND NVL(dept.isinactive, 'F') = 'F'
                                 AND op.custrecord_jj_oprtns_entry >= TO_DATE('${sqlStartDate}', 'YYYY-MM-DD')
