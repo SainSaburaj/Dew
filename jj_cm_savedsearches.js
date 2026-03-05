@@ -8930,25 +8930,30 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                         ON op.ID = dir.custrecord_jj_operations
                     LEFT JOIN item
                         ON dir.custrecord_jj_component = item.ID
+                    LEFT JOIN CUSTOMRECORD_JJ_BAGCORE_MATERIALS bagcore_mat
+                        ON dir.custrecord_jj_bag_core_material_record = bagcore_mat.ID
                     LEFT JOIN (
                         SELECT 
-                            bagcore_mat.ID AS bagcore_id,
+                            bagcore_mat_inner.ID AS bagcore_id,
                             SUM(NVL(fgs.custrecord_jj_fgs_gold_weight, 0)) AS fgs_gold_weight,
                             SUM(NVL(fgs.custrecord_jj_fgs_diamond_weight, 0)) AS fgs_diamond_weight
-                        FROM CUSTOMRECORD_JJ_BAGCORE_MATERIALS bagcore_mat
+                        FROM CUSTOMRECORD_JJ_BAGCORE_MATERIALS bagcore_mat_inner
                         LEFT JOIN CUSTOMRECORD_JJ_BAG_LOT_DETAILS lotdet
-                            ON bagcore_mat.ID = lotdet.custrecord_jj_bag_core_material
+                            ON bagcore_mat_inner.ID = lotdet.custrecord_jj_bag_core_material
                         LEFT JOIN inventoryNumber inv
                             ON lotdet.custrecord_jj_lot_number = inv.ID
                         LEFT JOIN CUSTOMRECORD_JJ_FG_SERIALS fgs
                             ON inv.ID = fgs.custrecord_jj_fgs_serial
-                        GROUP BY bagcore_mat.ID
+                        GROUP BY bagcore_mat_inner.ID
                     ) fgser_agg
-                        ON dir.custrecord_jj_bag_core_material_record = fgser_agg.bagcore_id
+                        ON bagcore_mat.ID = fgser_agg.bagcore_id
                     WHERE (bag.name IS NOT NULL OR bag.altname IS NOT NULL)
                         AND NVL(op.isinactive, 'F') = 'F'
+                        AND NVL(bag.isinactive, 'F') = 'F'
+                        AND NVL(bagcore.isinactive, 'F') = 'F'
                         AND NVL(dept.isinactive, 'F') = 'F'
                         AND NVL(emp.isinactive, 'F') = 'F'
+                        AND dir.ID IS NOT NULL
                         AND (
                             NVL(dir.custrecord_jj_issued_quantity, 0) > 0
                             OR NVL(dir.custrecord_jj_dir_loss_quantity, 0) > 0
@@ -8970,13 +8975,6 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                         AND (
                             op.custrecord_jj_oprtns_entry >= TO_DATE('${sqlStartDate}', 'YYYY-MM-DD')
                             AND op.custrecord_jj_oprtns_entry < TO_DATE('${sqlEndDate}', 'YYYY-MM-DD') + 1
-                        )
-                        AND (
-                            NVL(dir.custrecord_jj_issued_quantity, 0) > 0
-                            OR NVL(dir.custrecord_jj_dir_loss_quantity, 0) > 0
-                            OR NVL(dir.custrecord_jj_dir_issued_pieces_info, 0) > 0
-                            OR NVL(dir.custrecord_jj_dir_loss_pieces_info, 0) > 0
-                            OR NVL(dir.custrecord_jj_dir_starting_qty, 0) > 0
                         )
                     `;
 
