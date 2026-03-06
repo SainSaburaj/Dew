@@ -8701,7 +8701,6 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                 try {
                     // Validate that dates are provided
                     if (!startDate || !endDate) {
-                        log.debug("getOverallEfficiencyData - Missing dates, returning empty result");
                         return {};
                     }
 
@@ -8947,29 +8946,22 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                         GROUP BY bagcore_mat_inner.ID
                     ) fgser_agg
                         ON bagcore_mat.ID = fgser_agg.bagcore_id
-                    WHERE (bag.name IS NOT NULL OR bag.altname IS NOT NULL)
-                        AND NVL(op.isinactive, 'F') = 'F'
-                        AND NVL(bag.isinactive, 'F') = 'F'
-                        AND NVL(bagcore.isinactive, 'F') = 'F'
-                        AND NVL(dept.isinactive, 'F') = 'F'
-                        AND NVL(emp.isinactive, 'F') = 'F'
-                        AND dir.ID IS NOT NULL
-                        AND (
+                    WHERE (
                             NVL(dir.custrecord_jj_issued_quantity, 0) > 0
                             OR NVL(dir.custrecord_jj_dir_loss_quantity, 0) > 0
                             OR NVL(dir.custrecord_jj_dir_issued_pieces_info, 0) > 0
                             OR NVL(dir.custrecord_jj_dir_loss_pieces_info, 0) > 0
                             OR NVL(dir.custrecord_jj_dir_starting_qty, 0) > 0
                         )
+                        AND NVL(op.isinactive, 'F') = 'F'
+                        AND NVL(dept.isinactive, 'F') = 'F'
+                        AND NVL(emp.isinactive, 'F') = 'F'
                 `;
 
 
                     if (formattedStartDate && formattedEndDate) {
                         const sqlStartDate = formatDateToString(formattedStartDate);
                         const sqlEndDate = formatDateToString(formattedEndDate);
-
-                        log.debug("getOverallEfficiencyData - Input Parameters", 
-                            `User selected dates - Start: ${sqlStartDate} (type: ${typeof sqlStartDate}), End: ${sqlEndDate} (type: ${typeof sqlEndDate})`);
 
                         sqlQuery += `
                         AND (

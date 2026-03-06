@@ -211,6 +211,26 @@
                             <p class="text-[10px] font-semibold text-gray-700">No. of Bags: <span class="text-blue-600">{{ dept.bag_count || 0 }}</span></p>
                         </div>
 
+                        <!-- Debug Values -->
+                        <div class="bg-yellow-50 p-1 rounded mb-2 text-left">
+                            <p class="text-[8px] text-gray-600 font-bold mb-1">GOLD:</p>
+                            <p class="text-[7px] text-gray-600">Start: {{ (dept.starting_quantity_gold || 0).toFixed(2) }}</p>
+                            <p class="text-[7px] text-gray-600">Issued: {{ (dept.issued_quantity_gold || 0).toFixed(2) }}</p>
+                            <p class="text-[7px] text-gray-600">Loss: {{ (dept.loss_quantity_gold || 0).toFixed(2) }}</p>
+                            <p class="text-[7px] text-gray-600">Scrap: {{ (dept.scrap_quantity_gold || 0).toFixed(2) }}</p>
+                            <p class="text-[7px] text-gray-600">Balance: {{ (dept.balance_quantity_gold || 0).toFixed(2) }}</p>
+                            <p class="text-[7px] text-yellow-600 font-bold">Calc Actual: {{ ((dept.starting_quantity_gold || 0) + (dept.issued_quantity_gold || 0) - (dept.loss_quantity_gold || 0) - (dept.scrap_quantity_gold || 0) - (dept.balance_quantity_gold || 0)).toFixed(2) }}</p>
+                        </div>
+                        <div class="bg-blue-50 p-1 rounded mb-2 text-left">
+                            <p class="text-[8px] text-gray-600 font-bold mb-1">DIAMOND:</p>
+                            <p class="text-[7px] text-gray-600">Start: {{ (dept.starting_quantity_diamond || 0).toFixed(2) }}</p>
+                            <p class="text-[7px] text-gray-600">Issued: {{ (dept.issued_quantity_diamond || 0).toFixed(2) }}</p>
+                            <p class="text-[7px] text-gray-600">Loss: {{ (dept.loss_quantity_diamond || 0).toFixed(2) }}</p>
+                            <p class="text-[7px] text-gray-600">Scrap: {{ (dept.scrap_quantity_diamond || 0).toFixed(2) }}</p>
+                            <p class="text-[7px] text-gray-600">Balance: {{ (dept.balance_quantity_diamond || 0).toFixed(2) }}</p>
+                            <p class="text-[7px] text-blue-600 font-bold">Calc Actual: {{ ((dept.starting_quantity_diamond || 0) + (dept.issued_quantity_diamond || 0) - (dept.loss_quantity_diamond || 0) - (dept.scrap_quantity_diamond || 0) - (dept.balance_quantity_diamond || 0)).toFixed(2) }}</p>
+                        </div>
+
                         <div class="text-[11px] font-semibold w-full text-center bg-gray-100 rounded p-1 mb-1">Issued & Loss Quantity</div>
 
                         <div class="grid grid-cols-2 mt-1 gap-y-1">
@@ -322,6 +342,26 @@
                         <!-- Bag Count -->
                         <div class="bg-green-50 p-1 rounded mb-2 text-center">
                             <p class="text-[10px] font-semibold text-gray-700">No. of Bags: <span class="text-blue-600">{{ emp.bag_count || 0 }}</span></p>
+                        </div>
+
+                        <!-- Debug Values -->
+                        <div class="bg-yellow-50 p-1 rounded mb-2 text-left">
+                            <p class="text-[8px] text-gray-600 font-bold mb-1">GOLD:</p>
+                            <p class="text-[7px] text-gray-600">Start: {{ (emp.starting_quantity_gold || 0).toFixed(2) }}</p>
+                            <p class="text-[7px] text-gray-600">Issued: {{ (emp.issued_quantity_gold || 0).toFixed(2) }}</p>
+                            <p class="text-[7px] text-gray-600">Loss: {{ (emp.loss_quantity_gold || 0).toFixed(2) }}</p>
+                            <p class="text-[7px] text-gray-600">Scrap: {{ (emp.scrap_quantity_gold || 0).toFixed(2) }}</p>
+                            <p class="text-[7px] text-gray-600">Balance: {{ (emp.balance_quantity_gold || 0).toFixed(2) }}</p>
+                            <p class="text-[7px] text-yellow-600 font-bold">Calc Actual: {{ ((emp.starting_quantity_gold || 0) + (emp.issued_quantity_gold || 0) - (emp.loss_quantity_gold || 0) - (emp.scrap_quantity_gold || 0) - (emp.balance_quantity_gold || 0)).toFixed(2) }}</p>
+                        </div>
+                        <div class="bg-blue-50 p-1 rounded mb-2 text-left">
+                            <p class="text-[8px] text-gray-600 font-bold mb-1">DIAMOND:</p>
+                            <p class="text-[7px] text-gray-600">Start: {{ (emp.starting_quantity_diamond || 0).toFixed(2) }}</p>
+                            <p class="text-[7px] text-gray-600">Issued: {{ (emp.issued_quantity_diamond || 0).toFixed(2) }}</p>
+                            <p class="text-[7px] text-gray-600">Loss: {{ (emp.loss_quantity_diamond || 0).toFixed(2) }}</p>
+                            <p class="text-[7px] text-gray-600">Scrap: {{ (emp.scrap_quantity_diamond || 0).toFixed(2) }}</p>
+                            <p class="text-[7px] text-gray-600">Balance: {{ (emp.balance_quantity_diamond || 0).toFixed(2) }}</p>
+                            <p class="text-[7px] text-blue-600 font-bold">Calc Actual: {{ ((emp.starting_quantity_diamond || 0) + (emp.issued_quantity_diamond || 0) - (emp.loss_quantity_diamond || 0) - (emp.scrap_quantity_diamond || 0) - (emp.balance_quantity_diamond || 0)).toFixed(2) }}</p>
                         </div>
 
                         <div class="text-[11px] font-semibold w-full text-center bg-gray-100 rounded p-1 mb-1">Issued & Loss Quantity</div>
