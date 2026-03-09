@@ -994,11 +994,22 @@ export default {
         });
 
         const totalDeptBagCount = computed(() => {
-            let sum = 0;
+            // Count unique bags across all departments
+            const uniqueBags = new Set();
             selectedDepartmentData.value.forEach(dept => {
-                sum += parseInt(dept.bag_count || 0);
+                if (dept.unique_bags_array && Array.isArray(dept.unique_bags_array)) {
+                    dept.unique_bags_array.forEach(bag => uniqueBags.add(bag));
+                }
             });
-            return sum;
+            // If no unique_bags_array, fallback to summing bag_count
+            if (uniqueBags.size === 0) {
+                let sum = 0;
+                selectedDepartmentData.value.forEach(dept => {
+                    sum += parseInt(dept.bag_count || 0);
+                });
+                return sum;
+            }
+            return uniqueBags.size;
         });
 
         const totalDeptIssuedQtyGold = computed(() => {
@@ -1050,11 +1061,22 @@ export default {
         });
 
         const totalEmpBagCount = computed(() => {
-            let sum = 0;
+            // Count unique bags across all employees
+            const uniqueBags = new Set();
             selectedEmployees.value.forEach(emp => {
-                sum += parseInt(emp.bag_count || 0);
+                if (emp.unique_bags_array && Array.isArray(emp.unique_bags_array)) {
+                    emp.unique_bags_array.forEach(bag => uniqueBags.add(bag));
+                }
             });
-            return sum;
+            // If no unique_bags_array, fallback to summing bag_count
+            if (uniqueBags.size === 0) {
+                let sum = 0;
+                selectedEmployees.value.forEach(emp => {
+                    sum += parseInt(emp.bag_count || 0);
+                });
+                return sum;
+            }
+            return uniqueBags.size;
         });
 
         // Compute Employee Table Totals (sum all rows in table)

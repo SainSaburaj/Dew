@@ -6888,7 +6888,11 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                             BUILTIN_RESULT.TYPE_BOOLEAN(CUSTOMRECORD_JJ_FG_SERIAL_COMPONENTS_SUB.isinactive) AS is_component_inactive, 
                             BUILTIN_RESULT.TYPE_INTEGER(transaction_SUB.id_0) AS bag_no_id, 
                             BUILTIN_RESULT.TYPE_STRING(transaction_SUB.name_0) AS bag_no_name,
-                            BUILTIN_RESULT.TYPE_INTEGER(transaction_SUB.custrecord_jj_baggen_bagcore_0) AS bag_core_tracking
+                            BUILTIN_RESULT.TYPE_INTEGER(transaction_SUB.custrecord_jj_baggen_bagcore_0) AS bag_core_tracking,
+                            BUILTIN_RESULT.TYPE_INTEGER(CUSTOMRECORD_JJ_FG_SERIALS.custrecord_jj_metal_quality) AS metal_quality_id,
+                            BUILTIN.DF(CUSTOMRECORD_JJ_FG_SERIALS.custrecord_jj_metal_quality) AS metal_quality_name,
+                            BUILTIN_RESULT.TYPE_INTEGER(CUSTOMRECORD_JJ_FG_SERIALS.custrecord_jj_stone_color) AS stone_color_id,
+                            BUILTIN.DF(CUSTOMRECORD_JJ_FG_SERIALS.custrecord_jj_stone_color) AS stone_color_name
                         FROM 
                             CUSTOMRECORD_JJ_FG_SERIALS, 
                             (
@@ -7029,6 +7033,8 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                                     bag_no_id: rowData[22],                                         // Bag Number ID
                                     bag_no_name: rowData[23],                                       // Bag Number Name
                                     bag_core_tracking: rowData[24],                                 // Bag Number Name
+                                    metal_quality_name: rowData[26],
+                                    stone_color_name: rowData[28]
                                 };
                             }
 
@@ -8991,8 +8997,8 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
 
                         sqlQuery += `
                         AND (
-                            op.custrecord_jj_oprtns_entry >= TO_DATE('${sqlStartDate}', 'YYYY-MM-DD')
-                            AND op.custrecord_jj_oprtns_entry < TO_DATE('${sqlEndDate}', 'YYYY-MM-DD') + 1
+                            op.custrecord_jj_oprtns_exit >= TO_DATE('${sqlStartDate}', 'YYYY-MM-DD')
+                            AND op.custrecord_jj_oprtns_exit < TO_DATE('${sqlEndDate}', 'YYYY-MM-DD') + 1
                         )
                     `;
 
@@ -9042,8 +9048,8 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                                 AND NVL(op.isinactive, 'F') = 'F'
                                 AND NVL(dept.isinactive, 'F') = 'F'
                                 AND NVL(emp.isinactive, 'F') = 'F'
-                                AND op.custrecord_jj_oprtns_entry >= TO_DATE('${sqlStartDate}', 'YYYY-MM-DD')
-                                AND op.custrecord_jj_oprtns_entry < TO_DATE('${sqlEndDate}', 'YYYY-MM-DD') + 1
+                                AND op.custrecord_jj_oprtns_exit >= TO_DATE('${sqlStartDate}', 'YYYY-MM-DD')
+                                AND op.custrecord_jj_oprtns_exit < TO_DATE('${sqlEndDate}', 'YYYY-MM-DD') + 1
                         `;
 
                         if (location) {
@@ -9066,6 +9072,62 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                                         departmentBagCounts[deptId] = new Set();
                                     }
                                     departmentBagCounts[deptId].add(bagName);
+                                }
+                            });
+
+                            // Separate query to fetch unique categories per department (same filters as bag count)
+                            let categoryQuery = `
+                                SELECT DISTINCT
+                                    BUILTIN_RESULT.TYPE_INTEGER(dept.ID) AS department_id,
+                                    BUILTIN_RESULT.TYPE_STRING(cat.name) AS category_name
+                                FROM CUSTOMRECORD_JJ_OPERATIONS op
+                                LEFT JOIN CUSTOMRECORD_JJ_BAG_GENERATION bag
+                                    ON op.custrecord_jj_oprtns_bagno = bag.ID
+                                LEFT JOIN CUSTOMRECORD_JJ_MANUFACTURING_DEPT dept
+                                    ON op.custrecord_jj_oprtns_department = dept.ID
+                                LEFT JOIN employee emp
+                                    ON op.custrecord_jj_oprtns_employee = emp.ID
+                                LEFT JOIN CUSTOMRECORD_JJ_DIRECT_ISSUE_RETURN dir
+                                    ON op.ID = dir.custrecord_jj_operations
+                                LEFT JOIN CUSTOMRECORD_JJ_BAG_CORE_TRACKING bagcore
+                                    ON bag.custrecord_jj_baggen_bagcore = bagcore.ID
+                                LEFT JOIN item item_kt
+                                    ON bagcore.custrecord_jj_bagcore_kt_col = item_kt.ID
+                                LEFT JOIN CUSTOMRECORD_JJ_CATEGORY cat
+                                    ON item_kt.custitem_jj_category = cat.ID
+                                WHERE (bag.name IS NOT NULL OR bag.altname IS NOT NULL)
+                                    AND (
+                                        NVL(dir.custrecord_jj_issued_quantity, 0) > 0
+                                        OR NVL(dir.custrecord_jj_dir_starting_qty, 0) > 0
+                                    )
+                                    AND cat.name IS NOT NULL
+                                    AND NVL(op.isinactive, 'F') = 'F'
+                                    AND NVL(dept.isinactive, 'F') = 'F'
+                                    AND NVL(emp.isinactive, 'F') = 'F'
+                                    AND op.custrecord_jj_oprtns_exit >= TO_DATE('${sqlStartDate}', 'YYYY-MM-DD')
+                                    AND op.custrecord_jj_oprtns_exit < TO_DATE('${sqlEndDate}', 'YYYY-MM-DD') + 1
+                            `;
+
+                            if (location) {
+                                categoryQuery += `
+                                    AND dept.custrecord_jj_mandept_location = ${location}
+                                `;
+                            }
+
+                            let categoryResults = query.runSuiteQL({ query: categoryQuery }).asMappedResults();
+                            log.debug("getOverallEfficiencyData - Category query results", categoryResults.length);
+
+                            // Group categories by department
+                            const departmentCategoryCounts = {};
+                            categoryResults.forEach(record => {
+                                const deptId = record.department_id;
+                                const categoryName = record.category_name;
+                                
+                                if (deptId && categoryName) {
+                                    if (!departmentCategoryCounts[deptId]) {
+                                        departmentCategoryCounts[deptId] = new Set();
+                                    }
+                                    departmentCategoryCounts[deptId].add(categoryName);
                                 }
                             });
 
@@ -9412,8 +9474,9 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                                         emp.categories_array = [];
                                     }
 
-                                    // Convert unique_bags Set to count
+                                    // Convert unique_bags Set to count and array
                                     emp.bag_count = emp.unique_bags ? emp.unique_bags.size : 0;
+                                    emp.unique_bags_array = emp.unique_bags ? Array.from(emp.unique_bags) : [];
 
                                     // Convert unique_categories Set to count
                                     emp.category_count = emp.unique_categories ? emp.unique_categories.size : 0;
@@ -9426,6 +9489,7 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
 
                                 // Use pre-fetched department bag count from separate query (same filters as employee level)
                                 dept.bag_count = departmentBagCounts[deptId] ? departmentBagCounts[deptId].size : 0;
+                                dept.unique_bags_array = departmentBagCounts[deptId] ? Array.from(departmentBagCounts[deptId]) : [];
                                 dept.category_count = (dept.unique_categories && dept.unique_categories.size) ? dept.unique_categories.size : 0;
                                 
                                 // Log all bag numbers for this department
