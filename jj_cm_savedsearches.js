@@ -9039,7 +9039,6 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                                     NVL(dir.custrecord_jj_issued_quantity, 0) > 0
                                     OR NVL(dir.custrecord_jj_dir_starting_qty, 0) > 0
                                 )
-                                AND emp.ID IS NOT NULL
                                 AND NVL(op.isinactive, 'F') = 'F'
                                 AND NVL(dept.isinactive, 'F') = 'F'
                                 AND NVL(emp.isinactive, 'F') = 'F'
