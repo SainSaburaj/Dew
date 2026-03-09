@@ -64,6 +64,7 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
         const GOLD_SCRAP_ITEM_LOT_NAME = "Scrap_Gold";
         const GOLD_SCRAP_ITEM_ID = 9321; // Internal id of the item "Scrap"
         const SCRAP_ITEM_PARENT_ID = 37469; // Parent internal id for scrap items (PD)
+        // const SCRAP_ITEM_PARENT_ID = 25092; // Parent internal id for scrap items (SB)
         const CURRENCY_INR_ID = 1;
         const JEWELRY_TYPE_ID = 8;
         const CARATS_TO_GRAMS_CONST = 0.2;
@@ -3648,60 +3649,88 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                         type: "customrecord_jj_operations",
                         filters: searchFilters,
                         columns: [
-                            search.createColumn({ name: "custrecord_jj_oprtns_bagno", label: "Bag Name/Number" }),
-                            search.createColumn({ name: "custrecord_jj_oprtns_bagcore", label: "Bag Core Tracking" }),
-                            search.createColumn({ name: "custrecord_jj_bagcore_customer", join: "CUSTRECORD_JJ_OPRTNS_BAGCORE", label: "Customer" }),
-                            search.createColumn({ name: "custrecord_jj_bagcore_wo", join: "CUSTRECORD_JJ_OPRTNS_BAGCORE", label: "Work Order", sort: search.Sort.DESC }),
-                            search.createColumn({ name: "custrecord_jj_baggen_qty", join: "CUSTRECORD_JJ_OPRTNS_BAGNO", label: "Quantity Per Bag" }),
-                            search.createColumn({ name: "custrecord_jj_bagcore_design", join: "CUSTRECORD_JJ_OPRTNS_BAGCORE", label: "Design" }),
-                            search.createColumn({ name: "custrecord_jj_bagcore_duedate", join: "CUSTRECORD_JJ_OPRTNS_BAGCORE", label: "Delivery Date" }),
-                            search.createColumn({ name: "custrecord_jj_bagcore_so", join: "CUSTRECORD_JJ_OPRTNS_BAGCORE", label: "Sales Order" }),
-                            search.createColumn({ name: "status", join: "CUSTRECORD_JJ_OPRTNS_WO", label: "Status" }),
-                            search.createColumn({ name: "custrecord_jj_bagcore_order_type", join: "CUSTRECORD_JJ_OPRTNS_BAGCORE", label: "Order Type" }),
-                            search.createColumn({ name: "custbody_jj_so_date", join: "CUSTRECORD_JJ_OPRTNS_WO", label: "SO Date" }),
-
+                            search.createColumn({ name: "custrecord_jj_oprtns_bagno", label: "bag_no_id" }),
+                            search.createColumn({ name: "custrecord_jj_oprtns_bagcore", label: "bag_core_tracking_id" }),
+                            search.createColumn({ name: "custrecord_jj_bagcore_customer", join: "CUSTRECORD_JJ_OPRTNS_BAGCORE", label: "customer_id" }),
+                            search.createColumn({ name: "custrecord_jj_bagcore_wo", join: "CUSTRECORD_JJ_OPRTNS_BAGCORE", label: "work_order_id", sort: search.Sort.DESC }),
+                            search.createColumn({ name: "custrecord_jj_baggen_qty", join: "CUSTRECORD_JJ_OPRTNS_BAGNO", label: "quantity_per_bag" }),
+                            search.createColumn({ name: "custrecord_jj_bagcore_design", join: "CUSTRECORD_JJ_OPRTNS_BAGCORE", label: "style_no" }),
+                            search.createColumn({ name: "custrecord_jj_bagcore_duedate", join: "CUSTRECORD_JJ_OPRTNS_BAGCORE", label: "delivery_date" }),
+                            search.createColumn({ name: "custrecord_jj_bagcore_so", join: "CUSTRECORD_JJ_OPRTNS_BAGCORE", label: "sales_order_id" }),
+                            search.createColumn({ name: "status", join: "CUSTRECORD_JJ_OPRTNS_WO", label: "status" }),
+                            search.createColumn({ name: "custrecord_jj_bagcore_order_type", join: "CUSTRECORD_JJ_OPRTNS_BAGCORE", label: "order_type" }),
+                            search.createColumn({ name: "custbody_jj_so_date", join: "CUSTRECORD_JJ_OPRTNS_WO", label: "sales_order_date" }),
                         ]
                     });
-                    operationsRecordSearch.run().each(result => {
-                        let bagNoId = result.getValue({ name: "custrecord_jj_oprtns_bagno" });
-                        let bagNoName = result.getText({ name: "custrecord_jj_oprtns_bagno" });
-                        let bagCoreTrackingId = result.getValue({ name: "custrecord_jj_oprtns_bagcore" });
-                        let customerId = result.getValue({ name: "custrecord_jj_bagcore_customer", join: "CUSTRECORD_JJ_OPRTNS_BAGCORE", label: "Customer" });
-                        let customerName = result.getText({ name: "custrecord_jj_bagcore_customer", join: "CUSTRECORD_JJ_OPRTNS_BAGCORE", label: "Customer" });
-                        let workOrderId = result.getValue({ name: "custrecord_jj_bagcore_wo", join: "CUSTRECORD_JJ_OPRTNS_BAGCORE", label: "Work Order" });
-                        let workOrderName = result.getText({ name: "custrecord_jj_bagcore_wo", join: "CUSTRECORD_JJ_OPRTNS_BAGCORE", label: "Work Order" });
-                        let orderedQuantity = result.getValue({ name: "custrecord_jj_baggen_qty", join: "CUSTRECORD_JJ_OPRTNS_BAGNO", label: "Quantity Per Bag" });
-                        let design = result.getValue({ name: "custrecord_jj_bagcore_design", join: "CUSTRECORD_JJ_OPRTNS_BAGCORE", label: "Design" });
-                        let deliveryDate = result.getValue({ name: "custrecord_jj_bagcore_duedate", join: "CUSTRECORD_JJ_OPRTNS_BAGCORE", label: "Delivery Date" });
-                        let salesOrderId = result.getValue({ name: "custrecord_jj_bagcore_so", join: "CUSTRECORD_JJ_OPRTNS_BAGCORE", label: "Sales Order" });
-                        let salesOrderName = result.getText({ name: "custrecord_jj_bagcore_so", join: "CUSTRECORD_JJ_OPRTNS_BAGCORE", label: "Sales Order" });
-                        let status = result.getValue({ name: "status", join: "CUSTRECORD_JJ_OPRTNS_WO", label: "Status" });
 
-                        let orderTypeId = result.getValue({ name: "custrecord_jj_bagcore_order_type", join: "CUSTRECORD_JJ_OPRTNS_BAGCORE", label: "Order Type" });
-
-                        let OrderTypeName = result.getText({ name: "custrecord_jj_bagcore_order_type", join: "CUSTRECORD_JJ_OPRTNS_BAGCORE", label: "Order Type" });
-                        let salesOrderDate = result.getValue({ name: "custbody_jj_so_date", join: "CUSTRECORD_JJ_OPRTNS_WO", label: "SO Date" });
-
-                        bagDetailsArray.push({
-                            bagNoId: bagNoId,
-                            bagNoName: bagNoName,
-                            bagCoreTrackingId: bagCoreTrackingId,
-                            customerId: customerId,
-                            customerName: customerName,
-                            workOrderId: workOrderId,
-                            workOrderName: workOrderName,
-                            orderedQuantity: orderedQuantity,
-                            design: design,
-                            deliveryDate: deliveryDate,
-                            salesOrderId: salesOrderId,
-                            salesOrderName: salesOrderName,
-                            status: status,
-                            orderTypeId: orderTypeId,
-                            OrderTypeName: OrderTypeName,
-                            salesOrderDate: salesOrderDate,
-                        });
-                        return true; // Return true to continue iteration
+                    let result = jjUtil.dataSets.iterateSavedSearch({
+                        searchObj: operationsRecordSearch,
+                        columns: jjUtil.dataSets.fetchSavedSearchColumn(operationsRecordSearch, 'label'),
+                        PAGE_INDEX: null,
+                        PAGE_SIZE: 1000
                     });
+
+                    log.debug("result", result);
+
+                    bagDetailsArray = result.map(r => ({
+                        bagNoId: r.bag_no_id?.value || '',
+                        bagNoName: r.bag_no_id?.text || '',
+                        bagCoreTrackingId: r.bag_core_tracking_id?.value || '',
+                        customerId: r.customer_id?.value || '',
+                        customerName: r.customer_id?.text || '',
+                        workOrderId: r.work_order_id?.value || '',
+                        workOrderName: r.work_order_id?.text || '',
+                        orderedQuantity: r.quantity_per_bag?.value || '',
+                        design: r.style_no?.value || '',
+                        deliveryDate: r.delivery_date?.value || '',
+                        salesOrderId: r.sales_order_id?.value || '',
+                        salesOrderName: r.sales_order_id?.text || '',
+                        status: r.status?.value || '',
+                        orderTypeId: r.order_type?.value || '',
+                        OrderTypeName: r.order_type?.text || '',
+                        salesOrderDate: r.sales_order_date?.value || ''
+                    }));
+
+                    // operationsRecordSearch.run().each(result => {
+                    //     let bagNoId = result.getValue({ name: "custrecord_jj_oprtns_bagno" });
+                    //     let bagNoName = result.getText({ name: "custrecord_jj_oprtns_bagno" });
+                    //     let bagCoreTrackingId = result.getValue({ name: "custrecord_jj_oprtns_bagcore" });
+                    //     let customerId = result.getValue({ name: "custrecord_jj_bagcore_customer", join: "CUSTRECORD_JJ_OPRTNS_BAGCORE", label: "Customer" });
+                    //     let customerName = result.getText({ name: "custrecord_jj_bagcore_customer", join: "CUSTRECORD_JJ_OPRTNS_BAGCORE", label: "Customer" });
+                    //     let workOrderId = result.getValue({ name: "custrecord_jj_bagcore_wo", join: "CUSTRECORD_JJ_OPRTNS_BAGCORE", label: "Work Order" });
+                    //     let workOrderName = result.getText({ name: "custrecord_jj_bagcore_wo", join: "CUSTRECORD_JJ_OPRTNS_BAGCORE", label: "Work Order" });
+                    //     let orderedQuantity = result.getValue({ name: "custrecord_jj_baggen_qty", join: "CUSTRECORD_JJ_OPRTNS_BAGNO", label: "Quantity Per Bag" });
+                    //     let design = result.getValue({ name: "custrecord_jj_bagcore_design", join: "CUSTRECORD_JJ_OPRTNS_BAGCORE", label: "Design" });
+                    //     let deliveryDate = result.getValue({ name: "custrecord_jj_bagcore_duedate", join: "CUSTRECORD_JJ_OPRTNS_BAGCORE", label: "Delivery Date" });
+                    //     let salesOrderId = result.getValue({ name: "custrecord_jj_bagcore_so", join: "CUSTRECORD_JJ_OPRTNS_BAGCORE", label: "Sales Order" });
+                    //     let salesOrderName = result.getText({ name: "custrecord_jj_bagcore_so", join: "CUSTRECORD_JJ_OPRTNS_BAGCORE", label: "Sales Order" });
+                    //     let status = result.getValue({ name: "status", join: "CUSTRECORD_JJ_OPRTNS_WO", label: "Status" });
+
+                    //     let orderTypeId = result.getValue({ name: "custrecord_jj_bagcore_order_type", join: "CUSTRECORD_JJ_OPRTNS_BAGCORE", label: "Order Type" });
+
+                    //     let OrderTypeName = result.getText({ name: "custrecord_jj_bagcore_order_type", join: "CUSTRECORD_JJ_OPRTNS_BAGCORE", label: "Order Type" });
+                    //     let salesOrderDate = result.getValue({ name: "custbody_jj_so_date", join: "CUSTRECORD_JJ_OPRTNS_WO", label: "SO Date" });
+
+                    //     bagDetailsArray.push({
+                    //         bagNoId: bagNoId,
+                    //         bagNoName: bagNoName,
+                    //         bagCoreTrackingId: bagCoreTrackingId,
+                    //         customerId: customerId,
+                    //         customerName: customerName,
+                    //         workOrderId: workOrderId,
+                    //         workOrderName: workOrderName,
+                    //         orderedQuantity: orderedQuantity,
+                    //         design: design,
+                    //         deliveryDate: deliveryDate,
+                    //         salesOrderId: salesOrderId,
+                    //         salesOrderName: salesOrderName,
+                    //         status: status,
+                    //         orderTypeId: orderTypeId,
+                    //         OrderTypeName: OrderTypeName,
+                    //         salesOrderDate: salesOrderDate,
+                    //     });
+                    //     return true; // Return true to continue iteration
+                    // });
                     return { status: 'SUCCESS', reason: 'Bag Details Listed', data: bagDetailsArray };
 
                 } catch (e) {
@@ -8948,9 +8977,6 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                         ON bagcore_mat.ID = fgser_agg.bagcore_id
                     WHERE (
                             NVL(dir.custrecord_jj_issued_quantity, 0) > 0
-                            OR NVL(dir.custrecord_jj_dir_loss_quantity, 0) > 0
-                            OR NVL(dir.custrecord_jj_dir_issued_pieces_info, 0) > 0
-                            OR NVL(dir.custrecord_jj_dir_loss_pieces_info, 0) > 0
                             OR NVL(dir.custrecord_jj_dir_starting_qty, 0) > 0
                         )
                         AND NVL(op.isinactive, 'F') = 'F'
@@ -8989,7 +9015,7 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                         throw sqlError;
                     }
 
-                    // Fetch ALL bags per department with only date and location filters (no quantity or employee filters)
+                    // Fetch bags per department with SAME filters as employee level (employee assigned + quantities recorded)
                     let departmentBagCounts = {};
                     if (formattedStartDate && formattedEndDate) {
                         const sqlStartDate = formatDateToString(formattedStartDate);
@@ -9004,9 +9030,19 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                                 ON op.custrecord_jj_oprtns_bagno = bag.ID
                             LEFT JOIN CUSTOMRECORD_JJ_MANUFACTURING_DEPT dept
                                 ON op.custrecord_jj_oprtns_department = dept.ID
+                            LEFT JOIN employee emp
+                                ON op.custrecord_jj_oprtns_employee = emp.ID
+                            LEFT JOIN CUSTOMRECORD_JJ_DIRECT_ISSUE_RETURN dir
+                                ON op.ID = dir.custrecord_jj_operations
                             WHERE (bag.name IS NOT NULL OR bag.altname IS NOT NULL)
+                                AND (
+                                    NVL(dir.custrecord_jj_issued_quantity, 0) > 0
+                                    OR NVL(dir.custrecord_jj_dir_starting_qty, 0) > 0
+                                )
+                                AND emp.ID IS NOT NULL
                                 AND NVL(op.isinactive, 'F') = 'F'
                                 AND NVL(dept.isinactive, 'F') = 'F'
+                                AND NVL(emp.isinactive, 'F') = 'F'
                                 AND op.custrecord_jj_oprtns_entry >= TO_DATE('${sqlStartDate}', 'YYYY-MM-DD')
                                 AND op.custrecord_jj_oprtns_entry < TO_DATE('${sqlEndDate}', 'YYYY-MM-DD') + 1
                         `;
@@ -9036,7 +9072,7 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
 
                             // Log bag counts per department
                             Object.entries(departmentBagCounts).forEach(([deptId, bags]) => {
-                                log.debug(`Department ${deptId} - Total Bags (All Operations)`, `Count: ${bags.size} | Bags: ${Array.from(bags).join(', ')}`);
+                                log.debug(`Department ${deptId} - Total Bags (With Employees & Quantities)`, `Count: ${bags.size} | Bags: ${Array.from(bags).join(', ')}`);
                             });
 
                         } catch (bagCountError) {
@@ -9389,14 +9425,14 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                                     delete emp.categories;
                                 });
 
-                                // Use pre-fetched department bag count from separate query (all bags with only date/location filters)
+                                // Use pre-fetched department bag count from separate query (same filters as employee level)
                                 dept.bag_count = departmentBagCounts[deptId] ? departmentBagCounts[deptId].size : 0;
                                 dept.category_count = (dept.unique_categories && dept.unique_categories.size) ? dept.unique_categories.size : 0;
                                 
                                 // Log all bag numbers for this department
                                 if (departmentBagCounts[deptId] && departmentBagCounts[deptId].size > 0) {
                                     const bagNumbers = Array.from(departmentBagCounts[deptId]).join(', ');
-                                    log.debug(`Department: ${dept.department_name} - Bag Numbers (All Operations)`, `Total: ${dept.bag_count} | Bags: ${bagNumbers}`);
+                                    log.debug(`Department: ${dept.department_name} - Bag Numbers (With Employees & Quantities)`, `Total: ${dept.bag_count} | Bags: ${bagNumbers}`);
                                 }
 
                                 // Calculate actual production for department
@@ -9449,7 +9485,7 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                 } catch (error) {
                     log.error("getOverallEfficiencyData - Fatal Error", error.toString());
                     log.error("getOverallEfficiencyData - Error Stack", error.stack);
-                    throw error;
+                    return {};
                 }
             },
 
