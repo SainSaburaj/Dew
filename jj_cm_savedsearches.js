@@ -9075,67 +9075,6 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                                 }
                             });
 
-                            // Separate query to fetch unique categories per department (same filters as bag count)
-                            let categoryQuery = `
-                                SELECT DISTINCT
-                                    BUILTIN_RESULT.TYPE_INTEGER(dept.ID) AS department_id,
-                                    BUILTIN_RESULT.TYPE_STRING(cat.name) AS category_name
-                                FROM CUSTOMRECORD_JJ_OPERATIONS op
-                                LEFT JOIN CUSTOMRECORD_JJ_BAG_GENERATION bag
-                                    ON op.custrecord_jj_oprtns_bagno = bag.ID
-                                LEFT JOIN CUSTOMRECORD_JJ_MANUFACTURING_DEPT dept
-                                    ON op.custrecord_jj_oprtns_department = dept.ID
-                                LEFT JOIN employee emp
-                                    ON op.custrecord_jj_oprtns_employee = emp.ID
-                                LEFT JOIN CUSTOMRECORD_JJ_DIRECT_ISSUE_RETURN dir
-                                    ON op.ID = dir.custrecord_jj_operations
-                                LEFT JOIN CUSTOMRECORD_JJ_BAG_CORE_TRACKING bagcore
-                                    ON bag.custrecord_jj_baggen_bagcore = bagcore.ID
-                                LEFT JOIN item item_kt
-                                    ON bagcore.custrecord_jj_bagcore_kt_col = item_kt.ID
-                                LEFT JOIN CUSTOMRECORD_JJ_CATEGORY cat
-                                    ON item_kt.custitem_jj_category = cat.ID
-                                WHERE (bag.name IS NOT NULL OR bag.altname IS NOT NULL)
-                                    AND (
-                                        NVL(dir.custrecord_jj_issued_quantity, 0) > 0
-                                        OR NVL(dir.custrecord_jj_dir_starting_qty, 0) > 0
-                                    )
-                                    AND cat.name IS NOT NULL
-                                    AND NVL(op.isinactive, 'F') = 'F'
-                                    AND NVL(dept.isinactive, 'F') = 'F'
-                                    AND NVL(emp.isinactive, 'F') = 'F'
-                                    AND op.custrecord_jj_oprtns_exit >= TO_DATE('${sqlStartDate}', 'YYYY-MM-DD')
-                                    AND op.custrecord_jj_oprtns_exit < TO_DATE('${sqlEndDate}', 'YYYY-MM-DD') + 1
-                            `;
-
-                            if (location) {
-                                categoryQuery += `
-                                    AND dept.custrecord_jj_mandept_location = ${location}
-                                `;
-                            }
-
-                            let categoryResults = query.runSuiteQL({ query: categoryQuery }).asMappedResults();
-                            log.debug("getOverallEfficiencyData - Category query results", categoryResults.length);
-
-                            // Group categories by department
-                            const departmentCategoryCounts = {};
-                            categoryResults.forEach(record => {
-                                const deptId = record.department_id;
-                                const categoryName = record.category_name;
-                                
-                                if (deptId && categoryName) {
-                                    if (!departmentCategoryCounts[deptId]) {
-                                        departmentCategoryCounts[deptId] = new Set();
-                                    }
-                                    departmentCategoryCounts[deptId].add(categoryName);
-                                }
-                            });
-
-                            // Log bag counts per department
-                            Object.entries(departmentBagCounts).forEach(([deptId, bags]) => {
-                                log.debug(`Department ${deptId} - Total Bags (With Employees & Quantities)`, `Count: ${bags.size} | Bags: ${Array.from(bags).join(', ')}`);
-                            });
-
                         } catch (bagCountError) {
                             log.error("Error fetching department bag counts", bagCountError);
                         }
@@ -9226,38 +9165,37 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                             };
                         }
 
-                        // Track unique categories per department
-                        if (itemCategory) {
-                            acc[locationId].departments[departmentId].unique_categories.add(itemCategory);
+                        // Track unique categories per department (even if NULL/empty, track as "Uncategorized")
+                        const categoryKey = itemCategory || "Uncategorized";
+                        acc[locationId].departments[departmentId].unique_categories.add(categoryKey);
 
-                            // Initialize category if not exists
-                            if (!acc[locationId].departments[departmentId].categories[itemCategory]) {
-                                acc[locationId].departments[departmentId].categories[itemCategory] = {
-                                    category_name: itemCategory,
-                                    production: 0,
-                                    loss: 0,
-                                    production_diamond: 0,
-                                    loss_diamond: 0,
-                                    production_diamond_pieces: 0,
-                                    loss_diamond_pieces: 0,
-                                    issued_quantity_gold: 0,
-                                    loss_quantity_gold: 0,
-                                    starting_quantity_gold: 0,
-                                    scrap_quantity_gold: 0,
-                                    balance_quantity_gold: 0,
-                                    actual_production_gold: 0,
-                                    expense_jewellery_net_weight: 0,
-                                    expense_jewellery_diamond_weight: 0,
-                                    issued_quantity_diamond: 0,
-                                    loss_quantity_diamond: 0,
-                                    starting_quantity_diamond: 0,
-                                    scrap_quantity_diamond: 0,
-                                    balance_quantity_diamond: 0,
-                                    actual_production_diamond: 0,
-                                    issued_pieces_diamond: 0,
-                                    loss_pieces_diamond: 0
-                                };
-                            }
+                        // Initialize category if not exists
+                        if (!acc[locationId].departments[departmentId].categories[categoryKey]) {
+                            acc[locationId].departments[departmentId].categories[categoryKey] = {
+                                category_name: categoryKey,
+                                production: 0,
+                                loss: 0,
+                                production_diamond: 0,
+                                loss_diamond: 0,
+                                production_diamond_pieces: 0,
+                                loss_diamond_pieces: 0,
+                                issued_quantity_gold: 0,
+                                loss_quantity_gold: 0,
+                                starting_quantity_gold: 0,
+                                scrap_quantity_gold: 0,
+                                balance_quantity_gold: 0,
+                                actual_production_gold: 0,
+                                expense_jewellery_net_weight: 0,
+                                expense_jewellery_diamond_weight: 0,
+                                issued_quantity_diamond: 0,
+                                loss_quantity_diamond: 0,
+                                starting_quantity_diamond: 0,
+                                scrap_quantity_diamond: 0,
+                                balance_quantity_diamond: 0,
+                                actual_production_diamond: 0,
+                                issued_pieces_diamond: 0,
+                                loss_pieces_diamond: 0
+                            };
                         }
 
                         // Only process employee data if employeeId exists
@@ -9300,44 +9238,44 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                                 emp.unique_bags.add(bagName);
                             }
 
-                            // Track unique categories per employee
-                            if (itemCategory) {
-                                emp.unique_categories.add(itemCategory);
+                            // Track unique categories per employee (even if NULL/empty, track as "Uncategorized")
+                            const empCategoryKey = itemCategory || "Uncategorized";
+                            emp.unique_categories.add(empCategoryKey);
 
-                                // Initialize category if not exists
-                                if (!emp.categories[itemCategory]) {
-                                    emp.categories[itemCategory] = {
-                                        category_name: itemCategory,
-                                        tmProduction: 0,
-                                        tmProductionDiamond: 0,
-                                        tmProductionDiamondPieces: 0,
-                                        grossLoss: 0,
-                                        grossLossDiamond: 0,
-                                        grossLossDiamondPieces: 0,
-                                        issued_quantity_gold: 0,
-                                        loss_quantity_gold: 0,
-                                        starting_quantity_gold: 0,
-                                        scrap_quantity_gold: 0,
-                                        balance_quantity_gold: 0,
-                                        issued_quantity_diamond: 0,
-                                        loss_quantity_diamond: 0,
-                                        starting_quantity_diamond: 0,
-                                        scrap_quantity_diamond: 0,
-                                        balance_quantity_diamond: 0,
-                                        issued_pieces_diamond: 0,
-                                        loss_pieces_diamond: 0
-                                    };
-                                }
+                            // Initialize category if not exists
+                            if (!emp.categories[empCategoryKey]) {
+                                emp.categories[empCategoryKey] = {
+                                    category_name: empCategoryKey,
+                                    tmProduction: 0,
+                                    tmProductionDiamond: 0,
+                                    tmProductionDiamondPieces: 0,
+                                    grossLoss: 0,
+                                    grossLossDiamond: 0,
+                                    grossLossDiamondPieces: 0,
+                                    issued_quantity_gold: 0,
+                                    loss_quantity_gold: 0,
+                                    starting_quantity_gold: 0,
+                                    scrap_quantity_gold: 0,
+                                    balance_quantity_gold: 0,
+                                    issued_quantity_diamond: 0,
+                                    loss_quantity_diamond: 0,
+                                    starting_quantity_diamond: 0,
+                                    scrap_quantity_diamond: 0,
+                                    balance_quantity_diamond: 0,
+                                    issued_pieces_diamond: 0,
+                                    loss_pieces_diamond: 0
+                                };
+                            }
 
-                                const empCat = emp.categories[itemCategory];
+                            const empCat = emp.categories[empCategoryKey];
 
-                                // Aggregate category totals
-                                empCat.tmProduction += goldProd;
-                                empCat.tmProductionDiamond += diaProdCarats;
-                                empCat.tmProductionDiamondPieces += diaProdPieces;
-                                empCat.grossLoss += goldLoss;
-                                empCat.grossLossDiamond += diaLossCarats;
-                                empCat.grossLossDiamondPieces += diaLossPieces;
+                            // Aggregate category totals
+                            empCat.tmProduction += goldProd;
+                            empCat.tmProductionDiamond += diaProdCarats;
+                            empCat.tmProductionDiamondPieces += diaProdPieces;
+                            empCat.grossLoss += goldLoss;
+                            empCat.grossLossDiamond += diaLossCarats;
+                            empCat.grossLossDiamondPieces += diaLossPieces;
 
                                 empCat.issued_quantity_gold += dirIssuedQuantityGold;
                                 empCat.loss_quantity_gold += dirLossQuantityGold;
@@ -9352,7 +9290,6 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                                 empCat.balance_quantity_diamond += dirBalanceQuantityDiamond;
                                 empCat.issued_pieces_diamond += dirIssuedPiecesDiamond;
                                 empCat.loss_pieces_diamond += dirLossPiecesDiamond;
-                            }
 
                             /* EMPLOYEE TOTALS */
                             emp.tmProduction += goldProd;
@@ -9415,8 +9352,9 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                         dept.expense_jewellery_diamond_weight += expenseJewelleryDiamondWeight;
 
                         /* CATEGORY TOTALS */
-                        if (itemCategory && dept.categories[itemCategory]) {
-                            const cat = dept.categories[itemCategory];
+                        const deptCategoryKey = itemCategory || "Uncategorized";
+                        if (dept.categories[deptCategoryKey]) {
+                            const cat = dept.categories[deptCategoryKey];
                             cat.production += goldProd;
                             cat.loss += goldLoss;
                             cat.production_diamond += diaProdCarats;
@@ -9492,10 +9430,10 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                                 dept.unique_bags_array = departmentBagCounts[deptId] ? Array.from(departmentBagCounts[deptId]) : [];
                                 dept.category_count = (dept.unique_categories && dept.unique_categories.size) ? dept.unique_categories.size : 0;
                                 
-                                // Log all bag numbers for this department
-                                if (departmentBagCounts[deptId] && departmentBagCounts[deptId].size > 0) {
-                                    const bagNumbers = Array.from(departmentBagCounts[deptId]).join(', ');
-                                    log.debug(`Department: ${dept.department_name} - Bag Numbers (With Employees & Quantities)`, `Total: ${dept.bag_count} | Bags: ${bagNumbers}`);
+                                // Log all categories for this department
+                                if (dept.unique_categories && dept.unique_categories.size > 0) {
+                                    const categoryList = Array.from(dept.unique_categories).join(', ');
+                                    log.debug(`Department: ${dept.department_name} - Categories`, `Total: ${dept.category_count} | Categories: ${categoryList}`);
                                 }
 
                                 // Calculate actual production for department
