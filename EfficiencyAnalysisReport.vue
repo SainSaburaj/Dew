@@ -447,9 +447,12 @@
                                 <!-- <th class="px-3 py-2 text-left font-semibold">Dates</th> -->
                                 <th class="px-3 py-2 text-left font-semibold">No. of Bags</th>
                                 <th class="px-3 py-2 text-left font-semibold">Item category</th>
-                                <th class="px-3 py-2 text-left font-semibold">Starting Qty Gold</th>
+                                <th class="px-3 py-2 text-left font-semibold">Starting Qty</th>
+                                <th class="px-3 py-2 text-left font-semibold">Issued Qty</th>
+                                <th class="px-3 py-2 text-left font-semibold">Loss Qty</th>
+                                <th class="px-3 py-2 text-left font-semibold">Scrap Qty</th>
+                                <th class="px-3 py-2 text-left font-semibold">Balance Qty</th>
                                 <th class="px-3 py-2 text-left font-semibold">Actual Production Gold</th>
-                                <th class="px-3 py-2 text-left font-semibold">Loss Qty Gold</th>
                                 <th class="px-3 py-2 text-left font-semibold">Gold Loss %</th>
                                 <th class="px-3 py-2 text-left font-semibold">Starting Qty Diamond</th>
                                 <th class="px-3 py-2 text-left font-semibold">Actual Production Diamond</th>
@@ -481,14 +484,23 @@
                                         <!-- Item Category -->
                                         <td class="px-3 py-2 group-hover:shadow-md">{{ category || 'N/A' }}</td>
 
-                                        <!-- Starting Qty Gold -->
+                                        <!-- Starting Qty -->
                                         <td class="px-3 py-2 group-hover:shadow-md">{{ getCategoryStartingQty(dept, category) }}</td>
+                                        
+                                        <!-- Issued Qty -->
+                                        <td class="px-3 py-2 group-hover:shadow-md">{{ getCategoryIssuedQty(dept, category) }}</td>
+                                        
+                                        <!-- Loss Qty -->
+                                        <td class="px-3 py-2 text-red-500 group-hover:shadow-md">{{ getCategoryLossQty(dept, category) }}</td>
+                                        
+                                        <!-- Scrap Qty -->
+                                        <td class="px-3 py-2 group-hover:shadow-md">{{ getCategoryScrapQty(dept, category) }}</td>
+                                        
+                                        <!-- Balance Qty -->
+                                        <td class="px-3 py-2 group-hover:shadow-md">{{ getCategoryBalanceQty(dept, category) }}</td>
                                         
                                         <!-- Actual Production Gold -->
                                         <td class="px-3 py-2 group-hover:shadow-md">-</td>
-                                        
-                                        <!-- Gross Loss Gold -->
-                                        <td class="px-3 py-2 text-red-500 group-hover:shadow-md">{{ getCategoryLossQty(dept, category) }}</td>
                                         
                                         <!-- Gold Loss % -->
                                         <td class="px-3 py-2 text-red-500 group-hover:shadow-md">-</td>
@@ -1567,12 +1579,36 @@ export default {
             return data ? roundToTwo(data.starting_qty) : '-';
         };
 
+        // Helper function to get category-level issued quantity
+        const getCategoryIssuedQty = (dept, category) => {
+            if (!dept.category_qty_map) return '-';
+            const key = `${dept.id}_${category}`;
+            const data = dept.category_qty_map[key];
+            return data ? roundToTwo(data.issued_qty) : '-';
+        };
+
         // Helper function to get category-level loss quantity
         const getCategoryLossQty = (dept, category) => {
             if (!dept.category_qty_map) return '-';
             const key = `${dept.id}_${category}`;
             const data = dept.category_qty_map[key];
             return data ? roundToTwo(data.loss_qty) : '-';
+        };
+
+        // Helper function to get category-level scrap quantity
+        const getCategoryScrapQty = (dept, category) => {
+            if (!dept.category_qty_map) return '-';
+            const key = `${dept.id}_${category}`;
+            const data = dept.category_qty_map[key];
+            return data ? roundToTwo(data.scrap_qty) : '-';
+        };
+
+        // Helper function to get category-level balance quantity
+        const getCategoryBalanceQty = (dept, category) => {
+            if (!dept.category_qty_map) return '-';
+            const key = `${dept.id}_${category}`;
+            const data = dept.category_qty_map[key];
+            return data ? roundToTwo(data.balance_qty) : '-';
         };
 
 
@@ -2473,7 +2509,10 @@ export default {
             formatName,
             roundToTwo,
             getCategoryStartingQty,
+            getCategoryIssuedQty,
             getCategoryLossQty,
+            getCategoryScrapQty,
+            getCategoryBalanceQty,
             totalDeptActualProductionGold,
             totalDeptGrossLossGold,
             totalDeptActualProductionDiamond,

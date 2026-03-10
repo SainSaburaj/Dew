@@ -8962,7 +8962,10 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                                     BUILTIN_RESULT.TYPE_INTEGER(op.custrecord_jj_oprtns_department) AS department_id,
                                     BUILTIN_RESULT.TYPE_STRING(BUILTIN.DF(printdesign.custitem_jj_category)) AS category_name,
                                     BUILTIN_RESULT.TYPE_FLOAT(SUM(NVL(dir.custrecord_jj_dir_starting_qty, 0))) AS starting_qty,
-                                    BUILTIN_RESULT.TYPE_FLOAT(SUM(NVL(dir.custrecord_jj_dir_loss_quantity, 0))) AS loss_qty
+                                    BUILTIN_RESULT.TYPE_FLOAT(SUM(NVL(dir.custrecord_jj_issued_quantity, 0))) AS issued_qty,
+                                    BUILTIN_RESULT.TYPE_FLOAT(SUM(NVL(dir.custrecord_jj_dir_loss_quantity, 0))) AS loss_qty,
+                                    BUILTIN_RESULT.TYPE_FLOAT(SUM(NVL(dir.custrecord_jj_scrap_quantity, 0))) AS scrap_qty,
+                                    BUILTIN_RESULT.TYPE_FLOAT(SUM(NVL(dir.custrecord_jj_additional_quantity, 0))) AS balance_qty
                                 FROM CUSTOMRECORD_JJ_OPERATIONS op
                                 LEFT JOIN CUSTOMRECORD_JJ_DIRECT_ISSUE_RETURN dir
                                     ON dir.custrecord_jj_operations = op.ID
@@ -9004,7 +9007,7 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                             // Create maps for department-level and category-level data
                             const startingQtyMap = {}; // dept_id -> qty
                             const lossQtyMap = {}; // dept_id -> qty
-                            const categoryQtyMap = {}; // dept_id_category -> {starting_qty, loss_qty}
+                            const categoryQtyMap = {}; // dept_id_category -> {starting_qty, issued_qty, loss_qty, scrap_qty, balance_qty}
                             
                             startingQtyResults.forEach(record => {
                                 const deptId = record.department_id;
@@ -9014,7 +9017,10 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                                 // Store category-level data
                                 categoryQtyMap[key] = {
                                     starting_qty: parseFloat(record.starting_qty || 0),
-                                    loss_qty: parseFloat(record.loss_qty || 0)
+                                    issued_qty: parseFloat(record.issued_qty || 0),
+                                    loss_qty: parseFloat(record.loss_qty || 0),
+                                    scrap_qty: parseFloat(record.scrap_qty || 0),
+                                    balance_qty: parseFloat(record.balance_qty || 0)
                                 };
                                 
                                 // Accumulate department-level totals
@@ -9026,17 +9032,17 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                                 lossQtyMap[deptId] += parseFloat(record.loss_qty || 0);
                             });
                             
-                            // Log fetched starting and loss quantities
-                            let startingQtyLog = "=== FETCHED STARTING & LOSS QUANTITIES BY CATEGORY ===\n";
+                            // Log fetched quantities by category
+                            let startingQtyLog = "=== FETCHED QUANTITIES BY CATEGORY ===\n";
                             if (startingQtyResults.length === 0) {
                                 startingQtyLog += "No results found\n";
                             } else {
                                 startingQtyResults.forEach(record => {
-                                    startingQtyLog += `Dept ID ${record.department_id}, Category: ${record.category_name}: Starting_Qty=${record.starting_qty}, Loss_Qty=${record.loss_qty}\n`;
+                                    startingQtyLog += `Dept ID ${record.department_id}, Category: ${record.category_name}: Starting=${record.starting_qty}, Issued=${record.issued_qty}, Loss=${record.loss_qty}, Scrap=${record.scrap_qty}, Balance=${record.balance_qty}\n`;
                                 });
                             }
                             startingQtyLog += "====================================";
-                            log.debug("getOverallEfficiencyData - Fetched Starting & Loss Quantities", startingQtyLog);
+                            log.debug("getOverallEfficiencyData - Fetched Quantities by Category", startingQtyLog);
                             
                             Object.keys(groupedData).forEach(locationId => {
                                 Object.keys(groupedData[locationId].departments).forEach(departmentId => {
