@@ -8736,756 +8736,276 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                 try {
                     // Validate that dates are provided
                     if (!startDate || !endDate) {
+                        log.error("getOverallEfficiencyData", "Start date and end date are required");
                         return {};
                     }
 
-                    // Format dates as strings for SQL query (keep original string format)
-                    const formattedStartDate = startDate;
-                    const formattedEndDate = endDate;
+                    // Format dates for SQL query
+                    const sqlStartDate = startDate + ' 00:00:00';
+                    const sqlEndDate = endDate + ' 23:59:59';
 
-                    // Helper function to format Date object to YYYY-MM-DD
-                    const formatDateToString = (dateStr) => {
-                        if (!dateStr) return null;
-                        // If it's already a string in YYYY-MM-DD format, return as is
-                        if (typeof dateStr === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
-                            return dateStr;
-                        }
-                        // If it's a Date object, format it
-                        if (dateStr instanceof Date) {
-                            const year = dateStr.getFullYear();
-                            const month = String(dateStr.getMonth() + 1).padStart(2, '0');
-                            const day = String(dateStr.getDate()).padStart(2, '0');
-                            return `${year}-${month}-${day}`;
-                        }
-                        return dateStr;
-                    };
+                    log.debug("getOverallEfficiencyData - Parameters", {
+                        location: location,
+                        startDate: sqlStartDate,
+                        endDate: sqlEndDate
+                    });
 
-                    // Build upon the EXACT working bagCountQuery structure
-                    // Start with: CUSTOMRECORD_JJ_OPERATIONS op → bag → dept (same order as bagCountQuery)
+                    // Build the SQL query to fetch departments, employees, bags, and categories
                     let sqlQuery = `
-                    SELECT 
-                        BUILTIN_RESULT.TYPE_STRING(op.name) AS operation_id,
-                        BUILTIN_RESULT.TYPE_BOOLEAN(op.custrecord_jj_repair_order) AS is_repair,
-
-                        BUILTIN_RESULT.TYPE_INTEGER(dept.ID) AS department_id,
-                        BUILTIN_RESULT.TYPE_STRING(dept.name) AS department_name,
-                        BUILTIN_RESULT.TYPE_INTEGER(dept.custrecord_jj_mandept_location) AS location_id,
-                        BUILTIN_RESULT.TYPE_STRING(loc.name) AS location_name,
-
-                        BUILTIN_RESULT.TYPE_INTEGER(emp.ID) AS employee_id,
-                        BUILTIN_RESULT.TYPE_STRING(emp.firstname) AS firstname,
-                        BUILTIN_RESULT.TYPE_STRING(emp.lastname) AS lastname,
-
-                        BUILTIN_RESULT.TYPE_INTEGER(item.class) AS item_class,
-                        
-                        BUILTIN_RESULT.TYPE_STRING(NVL(bag.altname, bag.name)) AS bag_name,
-                        BUILTIN_RESULT.TYPE_STRING(cat.name) AS item_category,
-
-                        /* Raw Direct Issue/Return Fields - Separated by Class */
-                        BUILTIN_RESULT.TYPE_FLOAT(
-                            CASE 
-                                WHEN item.class IN (${GOLD_CLASS_IDS.join(',')}) THEN
-                                    NVL(dir.custrecord_jj_issued_quantity, 0)
-                                ELSE 0
-                            END
-                        ) AS dir_issued_quantity_gold,
-
-                        BUILTIN_RESULT.TYPE_FLOAT(
-                            CASE 
-                                WHEN item.class IN (${GOLD_CLASS_IDS.join(',')}) THEN
-                                    NVL(dir.custrecord_jj_dir_loss_quantity, 0)
-                                ELSE 0
-                            END
-                        ) AS dir_loss_quantity_gold,
-
-                        BUILTIN_RESULT.TYPE_FLOAT(
-                            CASE 
-                                WHEN item.class IN (${GOLD_CLASS_IDS.join(',')}) THEN
-                                    NVL(dir.custrecord_jj_dir_starting_qty, 0)
-                                ELSE 0
-                            END
-                        ) AS dir_starting_quantity_gold,
-
-                        BUILTIN_RESULT.TYPE_FLOAT(
-                            CASE 
-                                WHEN item.class IN (${GOLD_CLASS_IDS.join(',')}) THEN
-                                    NVL(dir.custrecord_jj_scrap_quantity, 0)
-                                ELSE 0
-                            END
-                        ) AS dir_scrap_quantity_gold,
-
-                        BUILTIN_RESULT.TYPE_FLOAT(
-                            CASE 
-                                WHEN item.class IN (${GOLD_CLASS_IDS.join(',')}) THEN
-                                    NVL(dir.custrecord_jj_additional_quantity, 0)
-                                ELSE 0
-                            END
-                        ) AS dir_balance_quantity_gold,
-
-                        BUILTIN_RESULT.TYPE_FLOAT(
-                            CASE 
-                                WHEN item.class = ${DIAMOND_ID} THEN
-                                    NVL(dir.custrecord_jj_issued_quantity, 0)
-                                ELSE 0
-                            END
-                        ) AS dir_issued_quantity_diamond,
-
-                        BUILTIN_RESULT.TYPE_FLOAT(
-                            CASE 
-                                WHEN item.class = ${DIAMOND_ID} THEN
-                                    NVL(dir.custrecord_jj_dir_loss_quantity, 0)
-                                ELSE 0
-                            END
-                        ) AS dir_loss_quantity_diamond,
-
-                        BUILTIN_RESULT.TYPE_FLOAT(
-                            CASE 
-                                WHEN item.class = ${DIAMOND_ID} THEN
-                                    NVL(dir.custrecord_jj_dir_starting_qty, 0)
-                                ELSE 0
-                            END
-                        ) AS dir_starting_quantity_diamond,
-
-                        BUILTIN_RESULT.TYPE_FLOAT(
-                            CASE 
-                                WHEN item.class = ${DIAMOND_ID} THEN
-                                    NVL(dir.custrecord_jj_scrap_quantity, 0)
-                                ELSE 0
-                            END
-                        ) AS dir_scrap_quantity_diamond,
-
-                        BUILTIN_RESULT.TYPE_FLOAT(
-                            CASE 
-                                WHEN item.class = ${DIAMOND_ID} THEN
-                                    NVL(dir.custrecord_jj_additional_quantity, 0)
-                                ELSE 0
-                            END
-                        ) AS dir_balance_quantity_diamond,
-
-                        BUILTIN_RESULT.TYPE_FLOAT(
-                            CASE 
-                                WHEN item.class = ${DIAMOND_ID} THEN
-                                    NVL(dir.custrecord_jj_dir_issued_pieces_info, 0)
-                                ELSE 0
-                            END
-                        ) AS dir_issued_pieces_diamond,
-
-                        BUILTIN_RESULT.TYPE_FLOAT(
-                            CASE 
-                                WHEN item.class = ${DIAMOND_ID} THEN
-                                    NVL(dir.custrecord_jj_dir_loss_pieces_info, 0)
-                                ELSE 0
-                            END
-                        ) AS dir_loss_pieces_diamond,
-
-                        BUILTIN_RESULT.TYPE_FLOAT(NVL(fgser_agg.fgs_gold_weight, 0)) AS expense_jewellery_gold_weight,
-                        BUILTIN_RESULT.TYPE_FLOAT(NVL(fgser_agg.fgs_diamond_weight, 0)) AS expense_jewellery_diamond_weight,
-
-                        BUILTIN_RESULT.TYPE_FLOAT(
-                            CASE 
-                                WHEN item.class IN (${GOLD_CLASS_IDS.join(',')}) THEN
-                                    NVL(dir.custrecord_jj_issued_quantity, 0)
-                                ELSE 0
-                            END
-                        ) AS tmproduction_gold,
-
-                        BUILTIN_RESULT.TYPE_FLOAT(
-                            CASE 
-                                WHEN item.class IN (${GOLD_CLASS_IDS.join(',')}) THEN
-                                    NVL(dir.custrecord_jj_dir_loss_quantity, 0)
-                                ELSE 0
-                            END
-                        ) AS loss_gold,
-
-                        BUILTIN_RESULT.TYPE_FLOAT(
-                            CASE 
-                                WHEN item.class = ${DIAMOND_ID} THEN
-                                    NVL(dir.custrecord_jj_issued_quantity, 0)
-                                ELSE 0
-                            END
-                        ) AS tmproduction_diamond_carats,
-
-                        BUILTIN_RESULT.TYPE_FLOAT(
-                            CASE 
-                                WHEN item.class = ${DIAMOND_ID} THEN
-                                    NVL(dir.custrecord_jj_dir_loss_quantity, 0)
-                                ELSE 0
-                            END
-                        ) AS loss_diamond_carats,
-
-                        BUILTIN_RESULT.TYPE_FLOAT(
-                            CASE 
-                                WHEN item.class IN (${GOLD_CLASS_IDS.join(',')}) THEN
-                                    NVL(dir.custrecord_jj_dir_issued_pieces_info, 0)
-                                ELSE 0
-                            END
-                        ) AS tmproduction_gold_pieces,
-
-                        BUILTIN_RESULT.TYPE_FLOAT(
-                            CASE 
-                                WHEN item.class IN (${GOLD_CLASS_IDS.join(',')}) THEN
-                                    NVL(dir.custrecord_jj_dir_loss_pieces_info, 0)
-                                ELSE 0
-                            END
-                        ) AS loss_gold_pieces,
-
-                        BUILTIN_RESULT.TYPE_FLOAT(
-                            CASE 
-                                WHEN item.class = ${DIAMOND_ID} THEN
-                                    NVL(dir.custrecord_jj_dir_issued_pieces_info, 0)
-                                ELSE 0
-                            END
-                        ) AS tmproduction_diamond_pieces,
-
-                        BUILTIN_RESULT.TYPE_FLOAT(
-                            CASE 
-                                WHEN item.class = ${DIAMOND_ID} THEN
-                                    NVL(dir.custrecord_jj_dir_loss_pieces_info, 0)
-                                ELSE 0
-                            END
-                        ) AS loss_diamond_pieces
-
-                    FROM CUSTOMRECORD_JJ_OPERATIONS op
-                    LEFT JOIN CUSTOMRECORD_JJ_BAG_GENERATION bag
-                        ON op.custrecord_jj_oprtns_bagno = bag.ID
-                    LEFT JOIN CUSTOMRECORD_JJ_MANUFACTURING_DEPT dept
-                        ON op.custrecord_jj_oprtns_department = dept.ID
-                    LEFT JOIN LOCATION loc
-                        ON dept.custrecord_jj_mandept_location = loc.ID
-                    LEFT JOIN employee emp
-                        ON op.custrecord_jj_oprtns_employee = emp.ID
-                    LEFT JOIN CUSTOMRECORD_JJ_BAG_CORE_TRACKING bagcore
-                        ON bag.custrecord_jj_baggen_bagcore = bagcore.ID
-                    LEFT JOIN item item_kt
-                        ON bagcore.custrecord_jj_bagcore_kt_col = item_kt.ID
-                    LEFT JOIN CUSTOMRECORD_JJ_CATEGORY cat
-                        ON item_kt.custitem_jj_category = cat.ID
-                    LEFT JOIN CUSTOMRECORD_JJ_DIRECT_ISSUE_RETURN dir
-                        ON op.ID = dir.custrecord_jj_operations
-                    LEFT JOIN item
-                        ON dir.custrecord_jj_component = item.ID
-                    LEFT JOIN CUSTOMRECORD_JJ_BAGCORE_MATERIALS bagcore_mat
-                        ON dir.custrecord_jj_bag_core_material_record = bagcore_mat.ID
-                    LEFT JOIN (
-                        SELECT 
-                            bagcore_mat_inner.ID AS bagcore_id,
-                            SUM(NVL(fgs.custrecord_jj_fgs_gold_weight, 0)) AS fgs_gold_weight,
-                            SUM(NVL(fgs.custrecord_jj_fgs_diamond_weight, 0)) AS fgs_diamond_weight
-                        FROM CUSTOMRECORD_JJ_BAGCORE_MATERIALS bagcore_mat_inner
-                        LEFT JOIN CUSTOMRECORD_JJ_BAG_LOT_DETAILS lotdet
-                            ON bagcore_mat_inner.ID = lotdet.custrecord_jj_bag_core_material
-                        LEFT JOIN inventoryNumber inv
-                            ON lotdet.custrecord_jj_lot_number = inv.ID
-                        LEFT JOIN CUSTOMRECORD_JJ_FG_SERIALS fgs
-                            ON inv.ID = fgs.custrecord_jj_fgs_serial
-                        GROUP BY bagcore_mat_inner.ID
-                    ) fgser_agg
-                        ON bagcore_mat.ID = fgser_agg.bagcore_id
-                    WHERE (
-                            NVL(dir.custrecord_jj_issued_quantity, 0) > 0
-                            OR NVL(dir.custrecord_jj_dir_starting_qty, 0) > 0
-                        )
-                        AND NVL(op.isinactive, 'F') = 'F'
-                        AND NVL(dept.isinactive, 'F') = 'F'
-                        AND NVL(emp.isinactive, 'F') = 'F'
-                `;
-
-
-                    if (formattedStartDate && formattedEndDate) {
-                        const sqlStartDate = formatDateToString(formattedStartDate);
-                        const sqlEndDate = formatDateToString(formattedEndDate);
-
-                        sqlQuery += `
-                        AND (
-                            op.custrecord_jj_oprtns_exit >= TO_DATE('${sqlStartDate}', 'YYYY-MM-DD')
-                            AND op.custrecord_jj_oprtns_exit < TO_DATE('${sqlEndDate}', 'YYYY-MM-DD') + 1
-                        )
+                        SELECT DISTINCT
+                            BUILTIN_RESULT.TYPE_INTEGER(CUSTOMRECORD_JJ_MANUFACTURING_DEPT_SUB."ID") AS department_id,
+                            BUILTIN_RESULT.TYPE_STRING(CUSTOMRECORD_JJ_MANUFACTURING_DEPT_SUB.name) AS department_name,
+                            BUILTIN_RESULT.TYPE_INTEGER(CUSTOMRECORD_JJ_MANUFACTURING_DEPT_SUB.custrecord_jj_mandept_location) AS location_id,
+                            BUILTIN_RESULT.TYPE_STRING(CUSTOMRECORD_JJ_MANUFACTURING_DEPT_SUB.name_0) AS location_name,
+                            BUILTIN_RESULT.TYPE_INTEGER(CUSTOMRECORD_JJ_OPERATIONS.custrecord_jj_oprtns_employee) AS employee_id,
+                            BUILTIN_RESULT.TYPE_STRING(employee.firstname) AS firstname,
+                            BUILTIN_RESULT.TYPE_STRING(employee.lastname) AS lastname,
+                            BUILTIN_RESULT.TYPE_INTEGER(CUSTOMRECORD_JJ_OPERATIONS.custrecord_jj_oprtns_bagno) AS bag_id,
+                            BUILTIN_RESULT.TYPE_STRING(NVL(CUSTOMRECORD_JJ_BAG_GENERATION_SUB.altname, CUSTOMRECORD_JJ_BAG_GENERATION_SUB.bag_name_original)) AS bag_name,
+                            BUILTIN_RESULT.TYPE_STRING(CUSTOMRECORD_JJ_BAG_GENERATION_SUB.name_0_0) AS category_name
+                        FROM CUSTOMRECORD_JJ_OPERATIONS,
+                            (SELECT 
+                                CUSTOMRECORD_JJ_DIRECT_ISSUE_RETURN.custrecord_jj_operations AS custrecord_jj_operations_join,
+                                CUSTOMRECORD_JJ_DIRECT_ISSUE_RETURN.custrecord_jj_issued_quantity AS custrecord_jj_issued_quantity_crit,
+                                CUSTOMRECORD_JJ_DIRECT_ISSUE_RETURN.custrecord_jj_dir_starting_qty AS custrecord_jj_dir_starting_qty_crit
+                            FROM CUSTOMRECORD_JJ_DIRECT_ISSUE_RETURN
+                            ) CUSTOMRECORD_JJ_DIRECT_ISSUE_RETURN_SUB,
+                            (SELECT 
+                                CUSTOMRECORD_JJ_BAG_GENERATION."ID" AS id_1,
+                                CUSTOMRECORD_JJ_BAG_GENERATION."ID" AS id_join,
+                                CUSTOMRECORD_JJ_BAG_GENERATION.name AS bag_name_original,
+                                CUSTOMRECORD_JJ_BAG_GENERATION.altname AS altname,
+                                CUSTOMRECORD_JJ_BAG_CORE_TRACKING_SUB.name_0 AS name_0_0
+                            FROM CUSTOMRECORD_JJ_BAG_GENERATION,
+                                (SELECT CUSTOMRECORD_JJ_BAG_CORE_TRACKING."ID" AS id_0,
+                                        CUSTOMRECORD_JJ_BAG_CORE_TRACKING."ID" AS id_join,
+                                        item_SUB.name AS name_0
+                                FROM CUSTOMRECORD_JJ_BAG_CORE_TRACKING,
+                                    (SELECT item_0."ID" AS "ID", item_0."ID" AS id_join, CUSTOMRECORD_JJ_CATEGORY.name AS name
+                                    FROM item item_0, CUSTOMRECORD_JJ_CATEGORY
+                                    WHERE item_0.custitem_jj_category = CUSTOMRECORD_JJ_CATEGORY."ID"(+)) item_SUB
+                                WHERE CUSTOMRECORD_JJ_BAG_CORE_TRACKING.custrecord_jj_bagcore_kt_col = item_SUB."ID"(+)) CUSTOMRECORD_JJ_BAG_CORE_TRACKING_SUB
+                            WHERE CUSTOMRECORD_JJ_BAG_GENERATION.custrecord_jj_baggen_bagcore = CUSTOMRECORD_JJ_BAG_CORE_TRACKING_SUB.id_0(+)
+                            ) CUSTOMRECORD_JJ_BAG_GENERATION_SUB,
+                            (SELECT 
+                                CUSTOMRECORD_JJ_MANUFACTURING_DEPT."ID" AS "ID",
+                                CUSTOMRECORD_JJ_MANUFACTURING_DEPT.name AS name,
+                                CUSTOMRECORD_JJ_MANUFACTURING_DEPT.custrecord_jj_mandept_location AS custrecord_jj_mandept_location,
+                                LOCATION.name AS name_0,
+                                CUSTOMRECORD_JJ_MANUFACTURING_DEPT.isinactive AS isinactive_crit,
+                                CUSTOMRECORD_JJ_MANUFACTURING_DEPT.custrecord_jj_mandept_location AS custrecord_jj_mandept_location_crit
+                            FROM CUSTOMRECORD_JJ_MANUFACTURING_DEPT, LOCATION
+                            WHERE CUSTOMRECORD_JJ_MANUFACTURING_DEPT.custrecord_jj_mandept_location = LOCATION."ID"(+)
+                            ) CUSTOMRECORD_JJ_MANUFACTURING_DEPT_SUB,
+                            employee
+                        WHERE CUSTOMRECORD_JJ_OPERATIONS."ID" = CUSTOMRECORD_JJ_DIRECT_ISSUE_RETURN_SUB.custrecord_jj_operations_join(+)
+                            AND CUSTOMRECORD_JJ_OPERATIONS.custrecord_jj_oprtns_bagno = CUSTOMRECORD_JJ_BAG_GENERATION_SUB.id_1(+)
+                            AND CUSTOMRECORD_JJ_OPERATIONS.custrecord_jj_oprtns_department = CUSTOMRECORD_JJ_MANUFACTURING_DEPT_SUB."ID"(+)
+                            AND CUSTOMRECORD_JJ_OPERATIONS.custrecord_jj_oprtns_employee = employee."ID"(+)
+                            AND (CUSTOMRECORD_JJ_BAG_GENERATION_SUB.bag_name_original IS NOT NULL OR CUSTOMRECORD_JJ_BAG_GENERATION_SUB.altname IS NOT NULL)
+                            AND (
+                                CUSTOMRECORD_JJ_DIRECT_ISSUE_RETURN_SUB.custrecord_jj_issued_quantity_crit > 0
+                                OR CUSTOMRECORD_JJ_DIRECT_ISSUE_RETURN_SUB.custrecord_jj_dir_starting_qty_crit > 0
+                            )
+                            AND NVL(CUSTOMRECORD_JJ_OPERATIONS.isinactive, 'F') = 'F'
+                            AND NVL(CUSTOMRECORD_JJ_MANUFACTURING_DEPT_SUB.isinactive_crit, 'F') = 'F'
+                            AND NVL(employee.isinactive, 'F') = 'F'
+                            AND BUILTIN.CAST_AS(CUSTOMRECORD_JJ_OPERATIONS.custrecord_jj_oprtns_exit, 'TIMESTAMP_TZ_TRUNCED') >= TO_DATE('${sqlStartDate}', 'YYYY-MM-DD HH24:MI:SS')
+                            AND BUILTIN.CAST_AS(CUSTOMRECORD_JJ_OPERATIONS.custrecord_jj_oprtns_exit, 'TIMESTAMP_TZ_TRUNCED') < TO_DATE('${sqlEndDate}', 'YYYY-MM-DD HH24:MI:SS')
                     `;
 
-                        log.debug("getOverallEfficiencyData - SQL Date Filter", 
-                            `Date range in query: ${sqlStartDate} to ${sqlEndDate}`);
-                    }
-
+                    // Add location filter if provided
                     if (location) {
                         sqlQuery += `
-                        AND dept.custrecord_jj_mandept_location IN ('${location}')
-                    `;
-                    }
-
-                    let rawResults;
-                    try {
-                        log.debug("getOverallEfficiencyData - Executing SQL", "Query length: " + sqlQuery.length);
-                        rawResults = query.runSuiteQL({ query: sqlQuery }).asMappedResults();
-                        log.debug("getOverallEfficiencyData - Raw results count", rawResults.length);
-                    } catch (sqlError) {
-                        throw sqlError;
-                    }
-
-                    // Fetch bags per department with SAME filters as employee level (employee assigned + quantities recorded)
-                    let departmentBagCounts = {};
-                    if (formattedStartDate && formattedEndDate) {
-                        const sqlStartDate = formatDateToString(formattedStartDate);
-                        const sqlEndDate = formatDateToString(formattedEndDate);
-
-                        let bagCountQuery = `
-                            SELECT DISTINCT
-                                BUILTIN_RESULT.TYPE_INTEGER(dept.ID) AS department_id,
-                                BUILTIN_RESULT.TYPE_STRING(NVL(bag.altname, bag.name)) AS bag_name
-                            FROM CUSTOMRECORD_JJ_OPERATIONS op
-                            LEFT JOIN CUSTOMRECORD_JJ_BAG_GENERATION bag
-                                ON op.custrecord_jj_oprtns_bagno = bag.ID
-                            LEFT JOIN CUSTOMRECORD_JJ_MANUFACTURING_DEPT dept
-                                ON op.custrecord_jj_oprtns_department = dept.ID
-                            LEFT JOIN employee emp
-                                ON op.custrecord_jj_oprtns_employee = emp.ID
-                            LEFT JOIN CUSTOMRECORD_JJ_DIRECT_ISSUE_RETURN dir
-                                ON op.ID = dir.custrecord_jj_operations
-                            WHERE (bag.name IS NOT NULL OR bag.altname IS NOT NULL)
-                                AND (
-                                    NVL(dir.custrecord_jj_issued_quantity, 0) > 0
-                                    OR NVL(dir.custrecord_jj_dir_starting_qty, 0) > 0
-                                )
-                                AND NVL(op.isinactive, 'F') = 'F'
-                                AND NVL(dept.isinactive, 'F') = 'F'
-                                AND NVL(emp.isinactive, 'F') = 'F'
-                                AND op.custrecord_jj_oprtns_exit >= TO_DATE('${sqlStartDate}', 'YYYY-MM-DD')
-                                AND op.custrecord_jj_oprtns_exit < TO_DATE('${sqlEndDate}', 'YYYY-MM-DD') + 1
+                            AND CUSTOMRECORD_JJ_MANUFACTURING_DEPT_SUB.custrecord_jj_mandept_location_crit IN ('${location}')
                         `;
-
-                        if (location) {
-                            bagCountQuery += `
-                                AND dept.custrecord_jj_mandept_location IN ('${location}')
-                            `;
-                        }
-
-                        try {
-                            let bagCountResults = query.runSuiteQL({ query: bagCountQuery }).asMappedResults();
-                            log.debug("getOverallEfficiencyData - Bag count query results", bagCountResults.length);
-
-                            // Group bags by department
-                            bagCountResults.forEach(record => {
-                                const deptId = record.department_id;
-                                const bagName = record.bag_name;
-                                
-                                if (deptId && bagName) {
-                                    if (!departmentBagCounts[deptId]) {
-                                        departmentBagCounts[deptId] = new Set();
-                                    }
-                                    departmentBagCounts[deptId].add(bagName);
-                                }
-                            });
-
-                        } catch (bagCountError) {
-                            log.error("Error fetching department bag counts", bagCountError);
-                        }
                     }
 
-                    const groupedData = rawResults.reduce((acc, record) => {
+                    sqlQuery += `
+                        ORDER BY location_name, department_name, firstname, lastname
+                    `;
 
+                    log.debug("getOverallEfficiencyData - Executing Query", "Query length: " + sqlQuery.length);
+
+                    // Execute the query
+                    let rawResults = query.runSuiteQL({ query: sqlQuery }).asMappedResults();
+                    
+                    log.debug("getOverallEfficiencyData - Raw Results Count", rawResults.length);
+                    
+                    // Log first 10 raw results to see bag data
+                    let rawLogMsg = "=== RAW QUERY RESULTS (First 10) ===\n";
+                    rawResults.slice(0, 10).forEach((record, idx) => {
+                        rawLogMsg += `Row ${idx + 1}: Dept=${record.department_name}, Bag=${record.bag_name}, Employee=${record.firstname} ${record.lastname}\n`;
+                    });
+                    rawLogMsg += "====================================";
+                    log.debug("getOverallEfficiencyData - Raw Results Sample", rawLogMsg);
+
+                    // Group employees and bags by department and location
+                    const groupedData = {};
+
+                    rawResults.forEach(record => {
                         const locationId = record.location_id;
                         const departmentId = record.department_id;
                         const employeeId = record.employee_id;
                         const bagName = record.bag_name;
-                        const itemCategory = record.item_category;
+                        const categoryName = record.category_name;
 
-                        // Skip only if location or department is missing (employee can be null)
                         if (!locationId || !departmentId) {
-                            return acc;
+                            return;
                         }
 
-                        const goldProd = parseFloat(record.tmproduction_gold || 0);
-                        const goldLoss = parseFloat(record.loss_gold || 0);
-                        const diaProdCarats = parseFloat(record.tmproduction_diamond_carats || 0);
-                        const diaLossCarats = parseFloat(record.loss_diamond_carats || 0);
-                        const diaProdPieces = parseFloat(record.tmproduction_diamond_pieces || 0);
-                        const diaLossPieces = parseFloat(record.loss_diamond_pieces || 0);
-                        const isRepair = record.is_repair === true || record.is_repair === 'T';
-
-                        // Expense Jewellery - Gold Weight and Diamond Weight from FG Serials
-                        const expenseJewelleryGoldWeight = parseFloat(record.expense_jewellery_gold_weight || 0);
-                        const expenseJewelleryDiamondWeight = parseFloat(record.expense_jewellery_diamond_weight || 0);
-
-                        // Raw direct issue/return fields - separated by class
-                        const dirIssuedQuantityGold = parseFloat(record.dir_issued_quantity_gold || 0);
-                        const dirLossQuantityGold = parseFloat(record.dir_loss_quantity_gold || 0);
-                        const dirStartingQuantityGold = parseFloat(record.dir_starting_quantity_gold || 0);
-                        const dirScrapQuantityGold = parseFloat(record.dir_scrap_quantity_gold || 0);
-                        const dirBalanceQuantityGold = parseFloat(record.dir_balance_quantity_gold || 0);
-                        const dirIssuedQuantityDiamond = parseFloat(record.dir_issued_quantity_diamond || 0);
-                        const dirLossQuantityDiamond = parseFloat(record.dir_loss_quantity_diamond || 0);
-                        const dirStartingQuantityDiamond = parseFloat(record.dir_starting_quantity_diamond || 0);
-                        const dirScrapQuantityDiamond = parseFloat(record.dir_scrap_quantity_diamond || 0);
-                        const dirBalanceQuantityDiamond = parseFloat(record.dir_balance_quantity_diamond || 0);
-                        const dirIssuedPiecesDiamond = parseFloat(record.dir_issued_pieces_diamond || 0);
-                        const dirLossPiecesDiamond = parseFloat(record.dir_loss_pieces_diamond || 0);
-
-                        /* LOCATION INIT */
-                        if (!acc[locationId]) {
-                            acc[locationId] = {
+                        // Initialize location if not exists
+                        if (!groupedData[locationId]) {
+                            groupedData[locationId] = {
                                 location_name: record.location_name,
-                                tmproduction_gold: 0,
-                                loss_gold: 0,
-                                tmproduction_diamond: 0,
-                                loss_diamond: 0,
-                                tmproduction_diamond_pieces: 0,
-                                loss_diamond_pieces: 0,
                                 departments: {}
                             };
                         }
 
-                        /* DEPARTMENT INIT */
-                        if (!acc[locationId].departments[departmentId]) {
-                            acc[locationId].departments[departmentId] = {
+                        // Initialize department if not exists
+                        if (!groupedData[locationId].departments[departmentId]) {
+                            groupedData[locationId].departments[departmentId] = {
+                                department_id: departmentId,
                                 department_name: record.department_name,
-                                production: 0,
-                                loss: 0,
-                                production_diamond: 0,
-                                loss_diamond: 0,
-                                production_diamond_pieces: 0,
-                                loss_diamond_pieces: 0,
-                                issued_quantity_gold: 0,
-                                loss_quantity_gold: 0,
-                                starting_quantity_gold: 0,
-                                scrap_quantity_gold: 0,
-                                balance_quantity_gold: 0,
-                                actual_production_gold: 0,
-                                expense_jewellery_net_weight: 0,
-                                expense_jewellery_diamond_weight: 0,
-                                issued_quantity_diamond: 0,
-                                loss_quantity_diamond: 0,
-                                starting_quantity_diamond: 0,
-                                scrap_quantity_diamond: 0,
-                                balance_quantity_diamond: 0,
-                                actual_production_diamond: 0,
-                                issued_pieces_diamond: 0,
-                                loss_pieces_diamond: 0,
-                                unique_categories: new Set(),
-                                categories: {}, // Store data by category
-                                employees: {}
+                                employees: {},
+                                unique_bags: new Set(),
+                                unique_categories: new Set()
                             };
                         }
 
-                        // Track unique categories per department (even if NULL/empty, track as "Uncategorized")
-                        const categoryKey = itemCategory || "Uncategorized";
-                        acc[locationId].departments[departmentId].unique_categories.add(categoryKey);
-
-                        // Initialize category if not exists
-                        if (!acc[locationId].departments[departmentId].categories[categoryKey]) {
-                            acc[locationId].departments[departmentId].categories[categoryKey] = {
-                                category_name: categoryKey,
-                                production: 0,
-                                loss: 0,
-                                production_diamond: 0,
-                                loss_diamond: 0,
-                                production_diamond_pieces: 0,
-                                loss_diamond_pieces: 0,
-                                issued_quantity_gold: 0,
-                                loss_quantity_gold: 0,
-                                starting_quantity_gold: 0,
-                                scrap_quantity_gold: 0,
-                                balance_quantity_gold: 0,
-                                actual_production_gold: 0,
-                                expense_jewellery_net_weight: 0,
-                                expense_jewellery_diamond_weight: 0,
-                                issued_quantity_diamond: 0,
-                                loss_quantity_diamond: 0,
-                                starting_quantity_diamond: 0,
-                                scrap_quantity_diamond: 0,
-                                balance_quantity_diamond: 0,
-                                actual_production_diamond: 0,
-                                issued_pieces_diamond: 0,
-                                loss_pieces_diamond: 0
-                            };
+                        // Add unique bag to department
+                        if (bagName) {
+                            groupedData[locationId].departments[departmentId].unique_bags.add(bagName);
                         }
 
-                        // Only process employee data if employeeId exists
+                        // Add unique category to department
+                        if (categoryName) {
+                            groupedData[locationId].departments[departmentId].unique_categories.add(categoryName);
+                        }
+
+                        // Add employee to department if employee exists
                         if (employeeId) {
-                            /* EMPLOYEE INIT */
-                            if (!acc[locationId].departments[departmentId].employees[employeeId]) {
+                            if (!groupedData[locationId].departments[departmentId].employees[employeeId]) {
                                 const fullName = [record.firstname, record.lastname].filter(Boolean).join(" ");
-                                acc[locationId].departments[departmentId].employees[employeeId] = {
+                                groupedData[locationId].departments[departmentId].employees[employeeId] = {
+                                    employee_id: employeeId,
                                     name: fullName || "Unknown Employee",
-                                    tmProduction: 0,
-                                    tmProductionDiamond: 0,
-                                    tmProductionDiamondPieces: 0,
-                                    grossLoss: 0,
-                                    grossLossDiamond: 0,
-                                    grossLossDiamondPieces: 0,
-                                    repairLoss: 0,
-                                    normalLoss: 0,
-                                    issued_quantity_gold: 0,
-                                    loss_quantity_gold: 0,
-                                    starting_quantity_gold: 0,
-                                    scrap_quantity_gold: 0,
-                                    balance_quantity_gold: 0,
-                                    issued_quantity_diamond: 0,
-                                    loss_quantity_diamond: 0,
-                                    starting_quantity_diamond: 0,
-                                    scrap_quantity_diamond: 0,
-                                    balance_quantity_diamond: 0,
-                                    issued_pieces_diamond: 0,
-                                    loss_pieces_diamond: 0,
                                     unique_bags: new Set(),
-                                    unique_categories: new Set(),
-                                    categories: {} // Store data by category
+                                    unique_categories: new Set()
                                 };
                             }
-
-                            const emp = acc[locationId].departments[departmentId].employees[employeeId];
-
-                            // Track unique bags per employee
+                            // Add unique bag to employee
                             if (bagName) {
-                                emp.unique_bags.add(bagName);
+                                groupedData[locationId].departments[departmentId].employees[employeeId].unique_bags.add(bagName);
                             }
-
-                            // Track unique categories per employee (even if NULL/empty, track as "Uncategorized")
-                            const empCategoryKey = itemCategory || "Uncategorized";
-                            emp.unique_categories.add(empCategoryKey);
-
-                            // Initialize category if not exists
-                            if (!emp.categories[empCategoryKey]) {
-                                emp.categories[empCategoryKey] = {
-                                    category_name: empCategoryKey,
-                                    tmProduction: 0,
-                                    tmProductionDiamond: 0,
-                                    tmProductionDiamondPieces: 0,
-                                    grossLoss: 0,
-                                    grossLossDiamond: 0,
-                                    grossLossDiamondPieces: 0,
-                                    issued_quantity_gold: 0,
-                                    loss_quantity_gold: 0,
-                                    starting_quantity_gold: 0,
-                                    scrap_quantity_gold: 0,
-                                    balance_quantity_gold: 0,
-                                    issued_quantity_diamond: 0,
-                                    loss_quantity_diamond: 0,
-                                    starting_quantity_diamond: 0,
-                                    scrap_quantity_diamond: 0,
-                                    balance_quantity_diamond: 0,
-                                    issued_pieces_diamond: 0,
-                                    loss_pieces_diamond: 0
-                                };
-                            }
-
-                            const empCat = emp.categories[empCategoryKey];
-
-                            // Aggregate category totals
-                            empCat.tmProduction += goldProd;
-                            empCat.tmProductionDiamond += diaProdCarats;
-                            empCat.tmProductionDiamondPieces += diaProdPieces;
-                            empCat.grossLoss += goldLoss;
-                            empCat.grossLossDiamond += diaLossCarats;
-                            empCat.grossLossDiamondPieces += diaLossPieces;
-
-                                empCat.issued_quantity_gold += dirIssuedQuantityGold;
-                                empCat.loss_quantity_gold += dirLossQuantityGold;
-                                empCat.starting_quantity_gold += dirStartingQuantityGold;
-                                empCat.scrap_quantity_gold += dirScrapQuantityGold;
-                                empCat.balance_quantity_gold += dirBalanceQuantityGold;
-
-                                empCat.issued_quantity_diamond += dirIssuedQuantityDiamond;
-                                empCat.loss_quantity_diamond += dirLossQuantityDiamond;
-                                empCat.starting_quantity_diamond += dirStartingQuantityDiamond;
-                                empCat.scrap_quantity_diamond += dirScrapQuantityDiamond;
-                                empCat.balance_quantity_diamond += dirBalanceQuantityDiamond;
-                                empCat.issued_pieces_diamond += dirIssuedPiecesDiamond;
-                                empCat.loss_pieces_diamond += dirLossPiecesDiamond;
-
-                            /* EMPLOYEE TOTALS */
-                            emp.tmProduction += goldProd;
-                            emp.tmProductionDiamond += diaProdCarats;
-                            emp.tmProductionDiamondPieces += diaProdPieces;
-                            emp.grossLoss += goldLoss;
-                            emp.grossLossDiamond += diaLossCarats;
-                            emp.grossLossDiamondPieces += diaLossPieces;
-
-                            // Raw quantities separated by class
-                            emp.issued_quantity_gold += dirIssuedQuantityGold;
-                            emp.loss_quantity_gold += dirLossQuantityGold;
-                            emp.starting_quantity_gold += dirStartingQuantityGold;
-                            emp.scrap_quantity_gold += dirScrapQuantityGold;
-                            emp.balance_quantity_gold += dirBalanceQuantityGold;
-
-                            emp.issued_quantity_diamond += dirIssuedQuantityDiamond;
-                            emp.loss_quantity_diamond += dirLossQuantityDiamond;
-                            emp.starting_quantity_diamond += dirStartingQuantityDiamond;
-                            emp.scrap_quantity_diamond += dirScrapQuantityDiamond;
-                            emp.balance_quantity_diamond += dirBalanceQuantityDiamond;
-                            emp.issued_pieces_diamond += dirIssuedPiecesDiamond;
-                            emp.loss_pieces_diamond += dirLossPiecesDiamond;
-
-                            if (isRepair) {
-                                emp.repairLoss += goldLoss;
-                            } else {
-                                emp.normalLoss += goldLoss;
+                            // Add unique category to employee
+                            if (categoryName) {
+                                groupedData[locationId].departments[departmentId].employees[employeeId].unique_categories.add(categoryName);
                             }
                         }
+                    });
 
-                        const dept = acc[locationId].departments[departmentId];
-                        const loc = acc[locationId];
+                    // Convert employees object to array and bags Set to count for each department and employee
+                    let logMessage = "=== DEPARTMENT & EMPLOYEE BAG COUNTS ===\n";
+                    Object.keys(groupedData).forEach(locationId => {
+                        logMessage += `Location ${locationId}: ${groupedData[locationId].location_name}\n`;
+                        Object.keys(groupedData[locationId].departments).forEach(departmentId => {
+                            const dept = groupedData[locationId].departments[departmentId];
+                            dept.employees_array = Object.values(dept.employees).map(emp => ({
+                                employee_id: emp.employee_id,
+                                name: emp.name,
+                                bag_count: emp.unique_bags.size,
+                                unique_bags_array: Array.from(emp.unique_bags),
+                                category_count: emp.unique_categories.size,
+                                unique_categories_array: Array.from(emp.unique_categories)
+                            }));
+                            dept.bag_count = dept.unique_bags.size;
+                            dept.unique_bags_array = Array.from(dept.unique_bags);
+                            dept.category_count = dept.unique_categories.size;
+                            dept.unique_categories_array = Array.from(dept.unique_categories);
+                            
+                            logMessage += `  Dept ${departmentId} (${dept.department_name}): ${dept.bag_count} bags, ${dept.category_count} categories | Employees: ${dept.employees_array.length}\n`;
+                            logMessage += `    Dept Bags: [${dept.unique_bags_array.join(', ')}]\n`;
+                            logMessage += `    Dept Categories: [${dept.unique_categories_array.join(', ')}]\n`;
+                            dept.employees_array.forEach(emp => {
+                                logMessage += `    - Employee: ${emp.name} | Bags: ${emp.bag_count} | Categories: ${emp.category_count} | Bag Names: [${emp.unique_bags_array.join(', ')}] | Categories: [${emp.unique_categories_array.join(', ')}]\n`;
+                            });
+                            
+                            delete dept.employees;
+                            delete dept.unique_bags;
+                            delete dept.unique_categories;
+                        });
+                    });
+                    logMessage += "========================================";
 
-                        /* DEPARTMENT TOTALS */
-                        dept.production += goldProd;
-                        dept.loss += goldLoss;
-                        dept.production_diamond += diaProdCarats;
-                        dept.loss_diamond += diaLossCarats;
-                        dept.production_diamond_pieces += diaProdPieces;
-                        dept.loss_diamond_pieces += diaLossPieces;
-
-                        // Raw quantities separated by class (no pieces for gold)
-                        dept.issued_quantity_gold += dirIssuedQuantityGold;
-                        dept.loss_quantity_gold += dirLossQuantityGold;
-                        dept.starting_quantity_gold += dirStartingQuantityGold;
-                        dept.scrap_quantity_gold += dirScrapQuantityGold;
-                        dept.balance_quantity_gold += dirBalanceQuantityGold;
-
-                        dept.issued_quantity_diamond += dirIssuedQuantityDiamond;
-                        dept.loss_quantity_diamond += dirLossQuantityDiamond;
-                        dept.starting_quantity_diamond += dirStartingQuantityDiamond;
-                        dept.scrap_quantity_diamond += dirScrapQuantityDiamond;
-                        dept.balance_quantity_diamond += dirBalanceQuantityDiamond;
-                        dept.issued_pieces_diamond += dirIssuedPiecesDiamond;
-                        dept.loss_pieces_diamond += dirLossPiecesDiamond;
-
-                        // Expense Jewellery - Gold Weight and Diamond Weight
-                        dept.expense_jewellery_net_weight += expenseJewelleryGoldWeight;
-                        dept.expense_jewellery_diamond_weight += expenseJewelleryDiamondWeight;
-
-                        /* CATEGORY TOTALS */
-                        const deptCategoryKey = itemCategory || "Uncategorized";
-                        if (dept.categories[deptCategoryKey]) {
-                            const cat = dept.categories[deptCategoryKey];
-                            cat.production += goldProd;
-                            cat.loss += goldLoss;
-                            cat.production_diamond += diaProdCarats;
-                            cat.loss_diamond += diaLossCarats;
-                            cat.production_diamond_pieces += diaProdPieces;
-                            cat.loss_diamond_pieces += diaLossPieces;
-                            cat.issued_quantity_gold += dirIssuedQuantityGold;
-                            cat.loss_quantity_gold += dirLossQuantityGold;
-                            cat.starting_quantity_gold += dirStartingQuantityGold;
-                            cat.scrap_quantity_gold += dirScrapQuantityGold;
-                            cat.balance_quantity_gold += dirBalanceQuantityGold;
-                            cat.issued_quantity_diamond += dirIssuedQuantityDiamond;
-                            cat.loss_quantity_diamond += dirLossQuantityDiamond;
-                            cat.starting_quantity_diamond += dirStartingQuantityDiamond;
-                            cat.scrap_quantity_diamond += dirScrapQuantityDiamond;
-                            cat.balance_quantity_diamond += dirBalanceQuantityDiamond;
-                            cat.issued_pieces_diamond += dirIssuedPiecesDiamond;
-                            cat.loss_pieces_diamond += dirLossPiecesDiamond;
-
-                            // Expense Jewellery - Gold Weight and Diamond Weight
-                            cat.expense_jewellery_net_weight += expenseJewelleryGoldWeight;
-                            cat.expense_jewellery_diamond_weight += expenseJewelleryDiamondWeight;
-                        }
-
-                        /* LOCATION TOTALS */
-                        loc.tmproduction_gold += goldProd;
-                        loc.loss_gold += goldLoss;
-                        loc.tmproduction_diamond += diaProdCarats;
-                        loc.loss_diamond += diaLossCarats;
-                        loc.tmproduction_diamond_pieces += diaProdPieces;
-                        loc.loss_diamond_pieces += diaLossPieces;
-                        return acc;
-
-                    }, {});
-
-                    // Convert Set to count for bag_count and prepare categories array
+                    // Set starting_qty to 0 for all departments
+                    Object.keys(groupedData).forEach(locationId => {
+                        Object.keys(groupedData[locationId].departments).forEach(departmentId => {
+                            groupedData[locationId].departments[departmentId].starting_qty = 0;
+                        });
+                    });
+                    
+                    // Fetch starting_qty for each department
                     try {
+                        const deptIds = [];
                         Object.keys(groupedData).forEach(locationId => {
-                            const location = groupedData[locationId];
-
-                            Object.keys(location.departments || {}).forEach(deptId => {
-                                const dept = location.departments[deptId];
-
-                                // Process employees first to get their bag counts
-                                Object.values(dept.employees || {}).forEach(emp => {
-                                    // Convert employee categories to array and calculate actual production
-                                    if (emp.categories && typeof emp.categories === 'object') {
-                                        emp.categories_array = Object.values(emp.categories).map(cat => {
-                                            // Calculate actual production for employee category
-                                            cat.actual_production_gold = cat.starting_quantity_gold + cat.issued_quantity_gold - cat.loss_quantity_gold - cat.scrap_quantity_gold - cat.balance_quantity_gold;
-                                            cat.actual_production_diamond = cat.starting_quantity_diamond + cat.issued_quantity_diamond - cat.loss_quantity_diamond - cat.scrap_quantity_diamond - cat.balance_quantity_diamond;
-                                            return cat;
-                                        });
-                                    } else {
-                                        emp.categories_array = [];
-                                    }
-
-                                    // Convert unique_bags Set to count and array
-                                    emp.bag_count = emp.unique_bags ? emp.unique_bags.size : 0;
-                                    emp.unique_bags_array = emp.unique_bags ? Array.from(emp.unique_bags) : [];
-
-                                    // Convert unique_categories Set to count
-                                    emp.category_count = emp.unique_categories ? emp.unique_categories.size : 0;
-
-                                    // Remove non-serializable objects from employee
-                                    delete emp.unique_bags;
-                                    delete emp.unique_categories;
-                                    delete emp.categories;
-                                });
-
-                                // Use pre-fetched department bag count from separate query (same filters as employee level)
-                                dept.bag_count = departmentBagCounts[deptId] ? departmentBagCounts[deptId].size : 0;
-                                dept.unique_bags_array = departmentBagCounts[deptId] ? Array.from(departmentBagCounts[deptId]) : [];
-                                dept.category_count = (dept.unique_categories && dept.unique_categories.size) ? dept.unique_categories.size : 0;
-                                
-                                // Log all categories for this department
-                                if (dept.unique_categories && dept.unique_categories.size > 0) {
-                                    const categoryList = Array.from(dept.unique_categories).join(', ');
-                                    log.debug(`Department: ${dept.department_name} - Categories`, `Total: ${dept.category_count} | Categories: ${categoryList}`);
-                                }
-
-                                // Calculate actual production for department
-                                // Formula: starting qty + issued qty - loss qty - scrap qty - balance qty
-                                // For Expense Jewellery, use gold/diamond weight if available
-                                dept.actual_production_gold = dept.expense_jewellery_net_weight > 0
-                                    ? dept.expense_jewellery_net_weight
-                                    : (dept.starting_quantity_gold + dept.issued_quantity_gold - dept.loss_quantity_gold - dept.scrap_quantity_gold - dept.balance_quantity_gold);
-                                dept.actual_production_diamond = dept.expense_jewellery_diamond_weight > 0
-                                    ? dept.expense_jewellery_diamond_weight
-                                    : (dept.starting_quantity_diamond + dept.issued_quantity_diamond - dept.loss_quantity_diamond - dept.scrap_quantity_diamond - dept.balance_quantity_diamond);
-
-                                // Convert categories object to array and calculate actual production for each category
-                                if (dept.categories && typeof dept.categories === 'object') {
-                                    dept.categories_array = Object.values(dept.categories).map(cat => {
-                                        // Calculate actual production for category
-                                        // For Expense Jewellery, use gold/diamond weight if available
-                                        cat.actual_production_gold = cat.expense_jewellery_net_weight > 0
-                                            ? cat.expense_jewellery_net_weight
-                                            : (cat.starting_quantity_gold + cat.issued_quantity_gold - cat.loss_quantity_gold - cat.scrap_quantity_gold - cat.balance_quantity_gold);
-                                        cat.actual_production_diamond = cat.expense_jewellery_diamond_weight > 0
-                                            ? cat.expense_jewellery_diamond_weight
-                                            : (cat.starting_quantity_diamond + cat.issued_quantity_diamond - cat.loss_quantity_diamond - cat.scrap_quantity_diamond - cat.balance_quantity_diamond);
-                                        return cat;
-                                    });
-                                } else {
-                                    dept.categories_array = [];
-                                }
-
-                                // Remove non-serializable objects
-                                delete dept.unique_categories;
-                                delete dept.categories;
+                            Object.keys(groupedData[locationId].departments).forEach(departmentId => {
+                                deptIds.push(departmentId);
                             });
                         });
-
-                        // Test JSON serialization
-                        JSON.stringify(groupedData);
-
-                        log.debug("getOverallEfficiencyData - Cleanup successful", "Data cleaned and serializable");
-
-                    } catch (e) {
-                        log.error("Error cleaning up groupedData", e.toString());
-                        log.error("Error stack", e.stack);
+                        
+                        log.debug("getOverallEfficiencyData - Starting Qty Fetch", "Department IDs: " + deptIds.join(','));
+                        
+                        if (deptIds.length > 0) {
+                            let startingQtyQuery = `
+                                SELECT 
+                                    BUILTIN_RESULT.TYPE_INTEGER(op.custrecord_jj_oprtns_department) AS department_id,
+                                    BUILTIN_RESULT.TYPE_FLOAT(SUM(NVL(dir.custrecord_jj_dir_starting_qty, 0))) AS starting_qty
+                                FROM CUSTOMRECORD_JJ_OPERATIONS op
+                                LEFT JOIN CUSTOMRECORD_JJ_DIRECT_ISSUE_RETURN dir
+                                    ON dir.custrecord_jj_operations = op.ID
+                                WHERE op.custrecord_jj_oprtns_department IN (${deptIds.join(',')})
+                                GROUP BY op.custrecord_jj_oprtns_department
+                            `;
+                            
+                            log.debug("getOverallEfficiencyData - Starting Qty Query", "Executing query");
+                            let startingQtyResults = query.runSuiteQL({ query: startingQtyQuery }).asMappedResults();
+                            
+                            log.debug("getOverallEfficiencyData - Starting Qty Results Count", startingQtyResults.length);
+                            
+                            const startingQtyMap = {};
+                            startingQtyResults.forEach(record => {
+                                startingQtyMap[record.department_id] = parseFloat(record.starting_qty || 0);
+                            });
+                            
+                            // Log fetched starting quantities
+                            let startingQtyLog = "=== FETCHED STARTING QUANTITIES ===\n";
+                            if (startingQtyResults.length === 0) {
+                                startingQtyLog += "No results found\n";
+                            } else {
+                                startingQtyResults.forEach(record => {
+                                    startingQtyLog += `Dept ID ${record.department_id}: Starting_Qty=${record.starting_qty}\n`;
+                                });
+                            }
+                            startingQtyLog += "====================================";
+                            log.debug("getOverallEfficiencyData - Fetched Starting Quantities", startingQtyLog);
+                            
+                            Object.keys(groupedData).forEach(locationId => {
+                                Object.keys(groupedData[locationId].departments).forEach(departmentId => {
+                                    groupedData[locationId].departments[departmentId].starting_qty = startingQtyMap[departmentId] || 0;
+                                });
+                            });
+                        } else {
+                            log.debug("getOverallEfficiencyData - Starting Qty Fetch", "No departments found in groupedData");
+                        }
+                    } catch (err) {
+                        log.error("Starting Qty Error", err);
                     }
-
-                    log.debug("getOverallEfficiencyData - Returning data", "Location count: " + Object.keys(groupedData).length);
 
                     return groupedData;
 
                 } catch (error) {
-                    log.error("getOverallEfficiencyData - Fatal Error", error.toString());
-                    log.error("getOverallEfficiencyData - Error Stack", error.stack);
+                    log.error("getOverallEfficiencyData - Error", error);
                     return {};
                 }
             },
