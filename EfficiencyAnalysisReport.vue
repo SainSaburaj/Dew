@@ -211,24 +211,14 @@
                             <p class="text-[10px] font-semibold text-gray-700">No. of Bags: <span class="text-blue-600">{{ dept.bag_count || 0 }}</span></p>
                         </div>
 
-                        <!-- Debug Values -->
-                        <div class="bg-yellow-50 p-1 rounded mb-2 text-left">
-                            <p class="text-[8px] text-gray-600 font-bold mb-1">GOLD:</p>
-                            <p class="text-[7px] text-gray-600">Start: {{ (dept.starting_quantity_gold || 0).toFixed(2) }}</p>
-                            <p class="text-[7px] text-gray-600">Issued: {{ (dept.issued_quantity_gold || 0).toFixed(2) }}</p>
-                            <p class="text-[7px] text-gray-600">Loss: {{ (dept.loss_quantity_gold || 0).toFixed(2) }}</p>
-                            <p class="text-[7px] text-gray-600">Scrap: {{ (dept.scrap_quantity_gold || 0).toFixed(2) }}</p>
-                            <p class="text-[7px] text-gray-600">Balance: {{ (dept.balance_quantity_gold || 0).toFixed(2) }}</p>
-                            <p class="text-[7px] text-yellow-600 font-bold">Calc Actual: {{ ((dept.starting_quantity_gold || 0) + (dept.issued_quantity_gold || 0) - (dept.loss_quantity_gold || 0) - (dept.scrap_quantity_gold || 0) - (dept.balance_quantity_gold || 0)).toFixed(2) }}</p>
+                        <!-- Starting Quantity -->
+                        <div class="bg-purple-50 p-1 rounded mb-2 text-center">
+                            <p class="text-[10px] font-semibold text-gray-700">Starting Qty: <span class="text-purple-600">{{ (dept.starting_qty || 0).toFixed(2) }}</span></p>
                         </div>
-                        <div class="bg-blue-50 p-1 rounded mb-2 text-left">
-                            <p class="text-[8px] text-gray-600 font-bold mb-1">DIAMOND:</p>
-                            <p class="text-[7px] text-gray-600">Start: {{ (dept.starting_quantity_diamond || 0).toFixed(2) }}</p>
-                            <p class="text-[7px] text-gray-600">Issued: {{ (dept.issued_quantity_diamond || 0).toFixed(2) }}</p>
-                            <p class="text-[7px] text-gray-600">Loss: {{ (dept.loss_quantity_diamond || 0).toFixed(2) }}</p>
-                            <p class="text-[7px] text-gray-600">Scrap: {{ (dept.scrap_quantity_diamond || 0).toFixed(2) }}</p>
-                            <p class="text-[7px] text-gray-600">Balance: {{ (dept.balance_quantity_diamond || 0).toFixed(2) }}</p>
-                            <p class="text-[7px] text-blue-600 font-bold">Calc Actual: {{ ((dept.starting_quantity_diamond || 0) + (dept.issued_quantity_diamond || 0) - (dept.loss_quantity_diamond || 0) - (dept.scrap_quantity_diamond || 0) - (dept.balance_quantity_diamond || 0)).toFixed(2) }}</p>
+
+                        <!-- Loss Quantity -->
+                        <div class="bg-red-50 p-1 rounded mb-2 text-center">
+                            <p class="text-[10px] font-semibold text-gray-700">Loss Qty: <span class="text-red-600">{{ (dept.loss_qty || 0).toFixed(2) }}</span></p>
                         </div>
 
                         <div class="text-[11px] font-semibold w-full text-center bg-gray-100 rounded p-1 mb-1">Issued & Loss Quantity</div>
@@ -342,26 +332,6 @@
                         <!-- Bag Count -->
                         <div class="bg-green-50 p-1 rounded mb-2 text-center">
                             <p class="text-[10px] font-semibold text-gray-700">No. of Bags: <span class="text-blue-600">{{ emp.bag_count || 0 }}</span></p>
-                        </div>
-
-                        <!-- Debug Values -->
-                        <div class="bg-yellow-50 p-1 rounded mb-2 text-left">
-                            <p class="text-[8px] text-gray-600 font-bold mb-1">GOLD:</p>
-                            <p class="text-[7px] text-gray-600">Start: {{ (emp.starting_quantity_gold || 0).toFixed(2) }}</p>
-                            <p class="text-[7px] text-gray-600">Issued: {{ (emp.issued_quantity_gold || 0).toFixed(2) }}</p>
-                            <p class="text-[7px] text-gray-600">Loss: {{ (emp.loss_quantity_gold || 0).toFixed(2) }}</p>
-                            <p class="text-[7px] text-gray-600">Scrap: {{ (emp.scrap_quantity_gold || 0).toFixed(2) }}</p>
-                            <p class="text-[7px] text-gray-600">Balance: {{ (emp.balance_quantity_gold || 0).toFixed(2) }}</p>
-                            <p class="text-[7px] text-yellow-600 font-bold">Calc Actual: {{ ((emp.starting_quantity_gold || 0) + (emp.issued_quantity_gold || 0) - (emp.loss_quantity_gold || 0) - (emp.scrap_quantity_gold || 0) - (emp.balance_quantity_gold || 0)).toFixed(2) }}</p>
-                        </div>
-                        <div class="bg-blue-50 p-1 rounded mb-2 text-left">
-                            <p class="text-[8px] text-gray-600 font-bold mb-1">DIAMOND:</p>
-                            <p class="text-[7px] text-gray-600">Start: {{ (emp.starting_quantity_diamond || 0).toFixed(2) }}</p>
-                            <p class="text-[7px] text-gray-600">Issued: {{ (emp.issued_quantity_diamond || 0).toFixed(2) }}</p>
-                            <p class="text-[7px] text-gray-600">Loss: {{ (emp.loss_quantity_diamond || 0).toFixed(2) }}</p>
-                            <p class="text-[7px] text-gray-600">Scrap: {{ (emp.scrap_quantity_diamond || 0).toFixed(2) }}</p>
-                            <p class="text-[7px] text-gray-600">Balance: {{ (emp.balance_quantity_diamond || 0).toFixed(2) }}</p>
-                            <p class="text-[7px] text-blue-600 font-bold">Calc Actual: {{ ((emp.starting_quantity_diamond || 0) + (emp.issued_quantity_diamond || 0) - (emp.loss_quantity_diamond || 0) - (emp.scrap_quantity_diamond || 0) - (emp.balance_quantity_diamond || 0)).toFixed(2) }}</p>
                         </div>
 
                         <div class="text-[11px] font-semibold w-full text-center bg-gray-100 rounded p-1 mb-1">Issued & Loss Quantity</div>
@@ -512,13 +482,13 @@
                                         <td class="px-3 py-2 group-hover:shadow-md">{{ category || 'N/A' }}</td>
 
                                         <!-- Starting Qty Gold -->
-                                        <td class="px-3 py-2 group-hover:shadow-md">-</td>
+                                        <td class="px-3 py-2 group-hover:shadow-md">{{ getCategoryStartingQty(dept, category) }}</td>
                                         
                                         <!-- Actual Production Gold -->
                                         <td class="px-3 py-2 group-hover:shadow-md">-</td>
                                         
                                         <!-- Gross Loss Gold -->
-                                        <td class="px-3 py-2 text-red-500 group-hover:shadow-md">-</td>
+                                        <td class="px-3 py-2 text-red-500 group-hover:shadow-md">{{ getCategoryLossQty(dept, category) }}</td>
                                         
                                         <!-- Gold Loss % -->
                                         <td class="px-3 py-2 text-red-500 group-hover:shadow-md">-</td>
@@ -1589,6 +1559,22 @@ export default {
             return value ? parseFloat(value).toFixed(2) : "0.00";
         };
 
+        // Helper function to get category-level starting quantity
+        const getCategoryStartingQty = (dept, category) => {
+            if (!dept.category_qty_map) return '-';
+            const key = `${dept.id}_${category}`;
+            const data = dept.category_qty_map[key];
+            return data ? roundToTwo(data.starting_qty) : '-';
+        };
+
+        // Helper function to get category-level loss quantity
+        const getCategoryLossQty = (dept, category) => {
+            if (!dept.category_qty_map) return '-';
+            const key = `${dept.id}_${category}`;
+            const data = dept.category_qty_map[key];
+            return data ? roundToTwo(data.loss_qty) : '-';
+        };
+
 
 
 
@@ -1926,6 +1912,8 @@ export default {
                                     category_count: dept.category_count || 0,
                                     unique_categories_array: dept.unique_categories_array || [],
                                     starting_qty: dept.starting_qty || 0,
+                                    loss_qty: dept.loss_qty || 0,
+                                    category_qty_map: dept.category_qty_map || {},
                                     employees: (dept.employees_array || []).map(emp => ({
                                         id: emp.employee_id,
                                         name: emp.name,
@@ -1938,12 +1926,12 @@ export default {
                             })
                         }));
 
-                        // Log processed locations with employee bag counts and starting_qty
+                        // Log processed locations with employee bag counts and starting_qty and loss_qty
                         let processedLog = '\n=== PROCESSED LOCATIONS (UI DATA) ===\n';
                         locations.value.forEach(loc => {
                             processedLog += `Location: ${loc.name.value}\n`;
                             loc.departments.forEach(dept => {
-                                processedLog += `  Dept: ${dept.name} | Bag Count: ${dept.bag_count} | Category Count: ${dept.category_count} | Starting Qty: ${dept.starting_qty} | Employees: ${dept.employees.length}\n`;
+                                processedLog += `  Dept: ${dept.name} | Bag Count: ${dept.bag_count} | Category Count: ${dept.category_count} | Starting Qty: ${dept.starting_qty} | Loss Qty: ${dept.loss_qty} | Employees: ${dept.employees.length}\n`;
                                 dept.employees.forEach(emp => {
                                     processedLog += `    - Employee: ${emp.name} | Bag Count: ${emp.bag_count} | Category Count: ${emp.category_count} | Bags: [${emp.unique_bags_array.join(', ')}] | Categories: [${emp.unique_categories_array.join(', ')}]\n`;
                                 });
@@ -2484,6 +2472,8 @@ export default {
             downloadData,
             formatName,
             roundToTwo,
+            getCategoryStartingQty,
+            getCategoryLossQty,
             totalDeptActualProductionGold,
             totalDeptGrossLossGold,
             totalDeptActualProductionDiamond,

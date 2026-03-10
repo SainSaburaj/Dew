@@ -8960,39 +8960,89 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                             let startingQtyQuery = `
                                 SELECT 
                                     BUILTIN_RESULT.TYPE_INTEGER(op.custrecord_jj_oprtns_department) AS department_id,
-                                    BUILTIN_RESULT.TYPE_FLOAT(SUM(NVL(dir.custrecord_jj_dir_starting_qty, 0))) AS starting_qty
+                                    BUILTIN_RESULT.TYPE_STRING(BUILTIN.DF(printdesign.custitem_jj_category)) AS category_name,
+                                    BUILTIN_RESULT.TYPE_FLOAT(SUM(NVL(dir.custrecord_jj_dir_starting_qty, 0))) AS starting_qty,
+                                    BUILTIN_RESULT.TYPE_FLOAT(SUM(NVL(dir.custrecord_jj_dir_loss_quantity, 0))) AS loss_qty
                                 FROM CUSTOMRECORD_JJ_OPERATIONS op
                                 LEFT JOIN CUSTOMRECORD_JJ_DIRECT_ISSUE_RETURN dir
                                     ON dir.custrecord_jj_operations = op.ID
+                                LEFT JOIN item
+                                    ON dir.custrecord_jj_component = item.ID
+                                LEFT JOIN CUSTOMRECORD_JJ_BAG_GENERATION bag
+                                    ON op.custrecord_jj_oprtns_bagno = bag.ID
+                                LEFT JOIN CUSTOMRECORD_JJ_BAG_CORE_TRACKING bagcore
+                                    ON bag.custrecord_jj_baggen_bagcore = bagcore.ID
+                                LEFT JOIN item printdesign 
+                                    ON bagcore.custrecord_jj_bagcore_kt_col = printdesign.ID
+                                LEFT JOIN (
+                                    SELECT 
+                                        d.ID AS id_join,
+                                        d.isinactive AS isinactive_crit
+                                    FROM CUSTOMRECORD_JJ_MANUFACTURING_DEPT d
+                                ) dept
+                                    ON op.custrecord_jj_oprtns_department = dept.id_join
+                                LEFT JOIN employee emp
+                                    ON op.custrecord_jj_oprtns_employee = emp.ID
                                 WHERE op.custrecord_jj_oprtns_department IN (${deptIds.join(',')})
-                                GROUP BY op.custrecord_jj_oprtns_department
+                                    AND (
+                                        dir.custrecord_jj_issued_quantity > 0
+                                        OR dir.custrecord_jj_dir_starting_qty > 0
+                                    )
+                                    AND NVL(op.isinactive, 'F') = 'F'
+                                    AND NVL(dept.isinactive_crit, 'F') = 'F'
+                                    AND NVL(emp.isinactive, 'F') = 'F'
+                                    AND BUILTIN.CAST_AS(op.custrecord_jj_oprtns_exit, 'TIMESTAMP_TZ_TRUNCED') >= TO_DATE('${sqlStartDate}', 'YYYY-MM-DD HH24:MI:SS')
+                                    AND BUILTIN.CAST_AS(op.custrecord_jj_oprtns_exit, 'TIMESTAMP_TZ_TRUNCED') < TO_DATE('${sqlEndDate}', 'YYYY-MM-DD HH24:MI:SS')
+                                GROUP BY op.custrecord_jj_oprtns_department, BUILTIN.DF(printdesign.custitem_jj_category)
                             `;
                             
-                            log.debug("getOverallEfficiencyData - Starting Qty Query", "Executing query");
+                            log.debug("getOverallEfficiencyData - Starting Qty Query", "Executing query with category-level aggregation");
                             let startingQtyResults = query.runSuiteQL({ query: startingQtyQuery }).asMappedResults();
                             
                             log.debug("getOverallEfficiencyData - Starting Qty Results Count", startingQtyResults.length);
                             
-                            const startingQtyMap = {};
+                            // Create maps for department-level and category-level data
+                            const startingQtyMap = {}; // dept_id -> qty
+                            const lossQtyMap = {}; // dept_id -> qty
+                            const categoryQtyMap = {}; // dept_id_category -> {starting_qty, loss_qty}
+                            
                             startingQtyResults.forEach(record => {
-                                startingQtyMap[record.department_id] = parseFloat(record.starting_qty || 0);
+                                const deptId = record.department_id;
+                                const category = record.category_name || 'N/A';
+                                const key = `${deptId}_${category}`;
+                                
+                                // Store category-level data
+                                categoryQtyMap[key] = {
+                                    starting_qty: parseFloat(record.starting_qty || 0),
+                                    loss_qty: parseFloat(record.loss_qty || 0)
+                                };
+                                
+                                // Accumulate department-level totals
+                                if (!startingQtyMap[deptId]) {
+                                    startingQtyMap[deptId] = 0;
+                                    lossQtyMap[deptId] = 0;
+                                }
+                                startingQtyMap[deptId] += parseFloat(record.starting_qty || 0);
+                                lossQtyMap[deptId] += parseFloat(record.loss_qty || 0);
                             });
                             
-                            // Log fetched starting quantities
-                            let startingQtyLog = "=== FETCHED STARTING QUANTITIES ===\n";
+                            // Log fetched starting and loss quantities
+                            let startingQtyLog = "=== FETCHED STARTING & LOSS QUANTITIES BY CATEGORY ===\n";
                             if (startingQtyResults.length === 0) {
                                 startingQtyLog += "No results found\n";
                             } else {
                                 startingQtyResults.forEach(record => {
-                                    startingQtyLog += `Dept ID ${record.department_id}: Starting_Qty=${record.starting_qty}\n`;
+                                    startingQtyLog += `Dept ID ${record.department_id}, Category: ${record.category_name}: Starting_Qty=${record.starting_qty}, Loss_Qty=${record.loss_qty}\n`;
                                 });
                             }
                             startingQtyLog += "====================================";
-                            log.debug("getOverallEfficiencyData - Fetched Starting Quantities", startingQtyLog);
+                            log.debug("getOverallEfficiencyData - Fetched Starting & Loss Quantities", startingQtyLog);
                             
                             Object.keys(groupedData).forEach(locationId => {
                                 Object.keys(groupedData[locationId].departments).forEach(departmentId => {
                                     groupedData[locationId].departments[departmentId].starting_qty = startingQtyMap[departmentId] || 0;
+                                    groupedData[locationId].departments[departmentId].loss_qty = lossQtyMap[departmentId] || 0;
+                                    groupedData[locationId].departments[departmentId].category_qty_map = categoryQtyMap;
                                 });
                             });
                         } else {
