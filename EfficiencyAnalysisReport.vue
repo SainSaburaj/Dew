@@ -447,17 +447,24 @@
                                 <!-- <th class="px-3 py-2 text-left font-semibold">Dates</th> -->
                                 <th class="px-3 py-2 text-left font-semibold">No. of Bags</th>
                                 <th class="px-3 py-2 text-left font-semibold">Item category</th>
-                                <th class="px-3 py-2 text-left font-semibold">Starting Qty</th>
-                                <th class="px-3 py-2 text-left font-semibold">Issued Qty</th>
-                                <th class="px-3 py-2 text-left font-semibold">Loss Qty</th>
-                                <th class="px-3 py-2 text-left font-semibold">Scrap Qty</th>
-                                <th class="px-3 py-2 text-left font-semibold">Balance Qty</th>
-                                <th class="px-3 py-2 text-left font-semibold">Actual Production Gold</th>
+
+                                <th class="px-3 py-2 text-left font-semibold">Starting Qty Gold</th>
+                                <th class="px-3 py-2 text-left font-semibold">Issued Qty Gold</th>
+                                <th class="px-3 py-2 text-left font-semibold">Loss Qty Gold</th>
+                                <th class="px-3 py-2 text-left font-semibold">Scrap Qty Gold</th>
+                                <th class="px-3 py-2 text-left font-semibold">Balance Qty Gold</th>
                                 <th class="px-3 py-2 text-left font-semibold">Gold Loss %</th>
+
                                 <th class="px-3 py-2 text-left font-semibold">Starting Qty Diamond</th>
-                                <th class="px-3 py-2 text-left font-semibold">Actual Production Diamond</th>
+                                <th class="px-3 py-2 text-left font-semibold">Issued Qty Diamond</th>
                                 <th class="px-3 py-2 text-left font-semibold">Loss Qty Diamond</th>
+                                <th class="px-3 py-2 text-left font-semibold">Scrap Qty Diamond</th>
+                                <th class="px-3 py-2 text-left font-semibold">Balance Qty Diamond</th>
                                 <th class="px-3 py-2 text-left font-semibold">Diamond Loss %</th>
+
+                                <th class="px-3 py-2 text-left font-semibold">Actual Production Gold</th>
+                                <th class="px-3 py-2 text-left font-semibold">Actual Production Diamond</th>
+
                                 <th class="px-3 py-2 text-left font-semibold">Gold Recovery Weight (gm)</th>
                                 <th class="px-3 py-2 text-left font-semibold">Net Loss Gold</th>
                                 <th class="px-3 py-2 text-left font-semibold">Diamond Recovery Weight (ct)</th>
@@ -484,38 +491,48 @@
                                         <!-- Item Category -->
                                         <td class="px-3 py-2 group-hover:shadow-md">{{ category || 'N/A' }}</td>
 
-                                        <!-- Starting Qty -->
+                                        <!-- Starting Qty Gold -->
                                         <td class="px-3 py-2 group-hover:shadow-md">{{ getCategoryStartingQty(dept, category) }}</td>
                                         
-                                        <!-- Issued Qty -->
+                                        <!-- Issued Qty Gold -->
                                         <td class="px-3 py-2 group-hover:shadow-md">{{ getCategoryIssuedQty(dept, category) }}</td>
                                         
-                                        <!-- Loss Qty -->
+                                        <!-- Loss Qty Gold -->
                                         <td class="px-3 py-2 text-red-500 group-hover:shadow-md">{{ getCategoryLossQty(dept, category) }}</td>
                                         
-                                        <!-- Scrap Qty -->
+                                        <!-- Scrap Qty Gold -->
                                         <td class="px-3 py-2 group-hover:shadow-md">{{ getCategoryScrapQty(dept, category) }}</td>
                                         
-                                        <!-- Balance Qty -->
+                                        <!-- Balance Qty Gold -->
                                         <td class="px-3 py-2 group-hover:shadow-md">{{ getCategoryBalanceQty(dept, category) }}</td>
                                         
-                                        <!-- Actual Production Gold -->
-                                        <td class="px-3 py-2 group-hover:shadow-md">-</td>
-                                        
                                         <!-- Gold Loss % -->
-                                        <td class="px-3 py-2 text-red-500 group-hover:shadow-md">-</td>
+                                        <td class="px-3 py-2 text-red-500 group-hover:shadow-md">{{ roundToTwo(calculateGoldLossPercentage(getCategoryIssuedQtyGoldRaw(dept, category), getCategoryLossQtyGoldRaw(dept, category))) }}%</td>
                                         
+
                                         <!-- Starting Qty Diamond -->
-                                        <td class="px-3 py-2 group-hover:shadow-md">-</td>
+                                        <td class="px-3 py-2 group-hover:shadow-md">{{ getCategoryStartingQtyDiamond(dept, category) }}</td>
                                         
-                                        <!-- Actual Production Diamond -->
-                                        <td class="px-3 py-2 group-hover:shadow-md">-</td>
+                                        <!-- Issued Qty Diamond -->
+                                        <td class="px-3 py-2 group-hover:shadow-md">{{ getCategoryIssuedQtyDiamond(dept, category) }}</td>
                                         
-                                        <!-- Gross Loss Diamond -->
-                                        <td class="px-3 py-2 text-red-500 group-hover:shadow-md">-</td>
+                                        <!-- Loss Qty Diamond -->
+                                        <td class="px-3 py-2 text-red-500 group-hover:shadow-md">{{ getCategoryLossQtyDiamond(dept, category) }}</td>
+                                        
+                                        <!-- Scrap Qty Diamond -->
+                                        <td class="px-3 py-2 group-hover:shadow-md">{{ getCategoryScrapQtyDiamond(dept, category) }}</td>
+                                        
+                                        <!-- Balance Qty Diamond -->
+                                        <td class="px-3 py-2 group-hover:shadow-md">{{ getCategoryBalanceQtyDiamond(dept, category) }}</td>
                                         
                                         <!-- Diamond Loss % -->
-                                        <td class="px-3 py-2 text-red-500 group-hover:shadow-md">-</td>
+                                        <td class="px-3 py-2 text-red-500 group-hover:shadow-md">{{ roundToTwo(calculateDiamondLossPercentage(getCategoryIssuedQtyDiamondRaw(dept, category), getCategoryLossQtyDiamondRaw(dept, category))) }}%</td>
+
+                                        <!-- Actual Production Gold -->
+                                        <td class="px-3 py-2 group-hover:shadow-md">{{ roundToTwo(getCategoryStartingQtyGoldRaw(dept, category) + getCategoryIssuedQtyGoldRaw(dept, category) - getCategoryLossQtyGoldRaw(dept, category) - getCategoryScrapQtyGoldRaw(dept, category) - getCategoryBalanceQtyGoldRaw(dept, category)) }}</td>
+                                        
+                                        <!-- Actual Production Diamond -->
+                                        <td class="px-3 py-2 group-hover:shadow-md">{{ roundToTwo(getCategoryStartingQtyDiamondRaw(dept, category) + getCategoryIssuedQtyDiamondRaw(dept, category) - getCategoryLossQtyDiamondRaw(dept, category) - getCategoryScrapQtyDiamondRaw(dept, category) - getCategoryBalanceQtyDiamondRaw(dept, category)) }}</td>
                                         
                                         <!-- Gold Recovery Weight -->
                                         <td class="px-3 py-2 group-hover:shadow-md">-</td>
@@ -523,11 +540,11 @@
                                         <!-- Net Loss Gold -->
                                         <td class="px-3 py-2 text-red-500 group-hover:shadow-md">-</td>
                                         
-                                        <!-- Diamond Recovery Weight (empty) -->
+                                        <!-- Diamond Recovery Weight -->
                                         <td class="px-3 py-2 group-hover:shadow-md">-</td>
                                         
-                                        <!-- Net Loss Diamond (empty) -->
-                                        <td class="px-3 py-2 group-hover:shadow-md"></td>
+                                        <!-- Net Loss Diamond -->
+                                        <td class="px-3 py-2 group-hover:shadow-md">-</td>
                                     </tr>
                                 </template>
                                 
@@ -551,23 +568,32 @@
                                     <!-- Loss Qty Gold -->
                                     <td class="px-3 py-2 text-red-500 group-hover:shadow-md">{{ roundToTwo(dept.loss_quantity_gold || 0) }}</td>
                                     
-                                    <!-- Starting Qty Gold -->
-                                    <td class="px-3 py-2 group-hover:shadow-md">{{ roundToTwo(dept.starting_quantity_gold || 0) }}</td>
+                                    <!-- Scrap Qty Gold -->
+                                    <td class="px-3 py-2 group-hover:shadow-md">{{ roundToTwo(dept.scrap_quantity_gold || 0) }}</td>
                                     
-                                    <!-- Actual Production Gold -->
-                                    <td class="px-3 py-2 group-hover:shadow-md">{{ roundToTwo(dept.actual_production_gold || 0) }}</td>
-                                    
-                                    <!-- Gross Loss Gold -->
-                                    <td class="px-3 py-2 text-red-500 group-hover:shadow-md">{{ roundToTwo(dept.loss || 0) }}</td>
+                                    <!-- Balance Qty Gold -->
+                                    <td class="px-3 py-2 group-hover:shadow-md">{{ roundToTwo(dept.balance_quantity_gold || 0) }}</td>
                                     
                                     <!-- Gold Loss % -->
-                                    <td class="px-3 py-2 text-red-500 group-hover:shadow-md">{{ roundToTwo(calculateGoldLossPercentage(dept.actual_production_gold, dept.loss)) }}%</td>
+                                    <td class="px-3 py-2 text-red-500 group-hover:shadow-md">{{ roundToTwo(calculateGoldLossPercentage(dept.issued_quantity_gold, dept.loss_quantity_gold)) }}%</td>
                                     
-                                    <!-- Issued Qty Diamond -->
-                                    <td class="px-3 py-2 group-hover:shadow-md">{{ roundToTwo(dept.issued_quantity_diamond || 0) }}</td>
+                                    <!-- Starting Qty Diamond -->
+                                    <td class="px-3 py-2 group-hover:shadow-md">{{ roundToTwo(dept.starting_quantity_diamond || 0) }}</td>
+                                    
+                                    <!-- Actual Production Diamond -->
+                                    <td class="px-3 py-2 group-hover:shadow-md">{{ roundToTwo(dept.actual_production_diamond || 0) }}</td>
                                     
                                     <!-- Loss Qty Diamond -->
                                     <td class="px-3 py-2 text-red-500 group-hover:shadow-md">{{ roundToTwo(dept.loss_quantity_diamond || 0) }}</td>
+                                    
+                                    <!-- Scrap Qty Diamond -->
+                                    <td class="px-3 py-2 group-hover:shadow-md">{{ roundToTwo(dept.scrap_quantity_diamond || 0) }}</td>
+                                    
+                                    <!-- Balance Qty Diamond -->
+                                    <td class="px-3 py-2 group-hover:shadow-md">{{ roundToTwo(dept.balance_quantity_diamond || 0) }}</td>
+                                    
+                                    <!-- Actual Production Gold -->
+                                    <td class="px-3 py-2 group-hover:shadow-md">{{ roundToTwo(dept.actual_production_gold || 0) }}</td>
                                     
                                     <!-- Starting Qty Diamond -->
                                     <td class="px-3 py-2 group-hover:shadow-md">{{ roundToTwo(dept.starting_quantity_diamond || 0) }}</td>
@@ -579,7 +605,7 @@
                                     <td class="px-3 py-2 text-red-500 group-hover:shadow-md">{{ roundToTwo(dept.loss_diamond || 0) }}</td>
                                     
                                     <!-- Diamond Loss % -->
-                                    <td class="px-3 py-2 text-red-500 group-hover:shadow-md">{{ roundToTwo(calculateDiamondLossPercentage(dept.actual_production_diamond, dept.loss_diamond)) }}%</td>
+                                    <td class="px-3 py-2 text-red-500 group-hover:shadow-md">{{ roundToTwo(calculateDiamondLossPercentage(dept.issued_quantity_diamond, dept.loss_quantity_diamond)) }}%</td>
                                     
                                     <!-- Gold Recovery Weight -->
                                     <td class="px-3 py-2 group-hover:shadow-md"></td>
@@ -712,8 +738,14 @@
                                     <!-- Loss Qty Gold -->
                                     <td class="px-3 py-2 text-red-500 group-hover:shadow-md">{{ roundToTwo(emp.loss_quantity_gold || 0) }}</td>
                                     
+                                    <!-- Scrap Qty Gold -->
+                                    <td class="px-3 py-2 group-hover:shadow-md">{{ roundToTwo(emp.scrap_quantity_gold || 0) }}</td>
+                                    
+                                    <!-- Balance Qty Gold -->
+                                    <td class="px-3 py-2 group-hover:shadow-md">{{ roundToTwo(emp.balance_quantity_gold || 0) }}</td>
+                                    
                                     <!-- Gold Loss % -->
-                                    <td class="px-3 py-2 text-red-500 group-hover:shadow-md">%</td>
+                                    <td class="px-3 py-2 text-red-500 group-hover:shadow-md">{{ roundToTwo(calculateGoldLossPercentage(emp.issued_quantity_gold, emp.loss_quantity_gold)) }}%</td>
                                     
                                     <!-- Starting Qty Diamond -->
                                     <td class="px-3 py-2 group-hover:shadow-md">{{ roundToTwo(emp.starting_quantity_diamond || 0) }}</td>
@@ -721,6 +753,21 @@
                                     <!-- Issued Qty Diamond -->
                                     <td class="px-3 py-2 group-hover:shadow-md">{{ roundToTwo(emp.issued_quantity_diamond || 0) }}</td>
 
+                                    <!-- Loss Qty Diamond -->
+                                    <td class="px-3 py-2 text-red-500 group-hover:shadow-md">{{ roundToTwo(emp.loss_quantity_diamond || 0) }}</td>
+                                    
+                                    <!-- Scrap Qty Diamond -->
+                                    <td class="px-3 py-2 group-hover:shadow-md">{{ roundToTwo(emp.scrap_quantity_diamond || 0) }}</td>
+                                    
+                                    <!-- Balance Qty Diamond -->
+                                    <td class="px-3 py-2 group-hover:shadow-md">{{ roundToTwo(emp.balance_quantity_diamond || 0) }}</td>
+                                    
+                                    <!-- Actual Production Gold -->
+                                    <td class="px-3 py-2 group-hover:shadow-md">{{ roundToTwo((emp.starting_quantity_gold || 0) + (emp.issued_quantity_gold || 0) - (emp.loss_quantity_gold || 0) - (emp.scrap_quantity_gold || 0) - (emp.balance_quantity_gold || 0)) }}</td>
+                                    
+                                    <!-- Starting Qty Diamond -->
+                                    <td class="px-3 py-2 group-hover:shadow-md">{{ roundToTwo(emp.starting_quantity_diamond || 0) }}</td>
+                                    
                                     <!-- Actual Production Diamond -->
                                     <td class="px-3 py-2 group-hover:shadow-md">{{ roundToTwo((emp.starting_quantity_diamond || 0) + (emp.issued_quantity_diamond || 0) - (emp.loss_quantity_diamond || 0) - (emp.scrap_quantity_diamond || 0) - (emp.balance_quantity_diamond || 0)) }}</td>
                                     
@@ -728,7 +775,7 @@
                                     <td class="px-3 py-2 text-red-500 group-hover:shadow-md">{{ roundToTwo(emp.loss_quantity_diamond || 0) }}</td>
                                     
                                     <!-- Diamond Loss % -->
-                                    <td class="px-3 py-2 text-red-500 group-hover:shadow-md">%</td>
+                                    <td class="px-3 py-2 text-red-500 group-hover:shadow-md">{{ roundToTwo(calculateDiamondLossPercentage(emp.issued_quantity_diamond, emp.loss_quantity_diamond)) }}%</td>
                                     
                                     <!-- Gold Recovery Weight -->
                                     <td class="px-3 py-2 group-hover:shadow-md">{{ roundToTwo(emp.tmGrossLossWeight || 0) }}</td>
@@ -736,11 +783,11 @@
                                     <!-- Net Loss Gold -->
                                     <td class="px-3 py-2 text-red-500 group-hover:shadow-md">{{ roundToTwo(emp.netLoss || 0) }}</td>
                                     
-                                    <!-- Diamond Recovery Weight (empty) -->
-                                    <td class="px-3 py-2 group-hover:shadow-md"></td>
+                                    <!-- Diamond Recovery Weight -->
+                                    <td class="px-3 py-2 group-hover:shadow-md">{{ roundToTwo(emp.diamondRecoveryWeight || 0) }}</td>
                                     
-                                    <!-- Net Loss Diamond (empty) -->
-                                    <td class="px-3 py-2 group-hover:shadow-md"></td>
+                                    <!-- Net Loss Diamond -->
+                                    <td class="px-3 py-2 group-hover:shadow-md">{{ roundToTwo(emp.netLossDiamond || 0) }}</td>
                                 </tr>
                             </template>
 
@@ -758,6 +805,8 @@
                                 <td class="px-3 py-2 font-semibold"></td>
                                 <!-- Starting Qty Gold -->
                                 <td class="px-3 py-2">{{ totalEmpStartingQuantityGold }}</td>
+                                <!-- Issued Qty Gold -->
+                                <td class="px-3 py-2">{{ totalEmpIssuedQuantityGold }}</td>
                                 <!-- Actual Production Gold -->
                                 <td class="px-3 py-2">{{ totalEmpActualProductionGoldCalculated }}</td>
                                 <!-- Loss Qty Gold -->
@@ -775,9 +824,9 @@
                                 <!-- Diamond Loss % (empty) -->
                                 <td class="px-3 py-2 text-red-500"></td>
                                 <!-- Gold Recovery Weight -->
-                                <td class="px-3 py-2"></td>
+                                <td class="px-3 py-2">{{ totalEmpGoldRecoveryWeight }}</td>
                                 <!-- Net Loss Gold -->
-                                <td class="px-3 py-2 text-red-500"></td>
+                                <td class="px-3 py-2 text-red-500">{{ totalEmpNetLossGold }}</td>
                                 <!-- Diamond Recovery Weight -->
                                 <td class="px-3 py-2"></td>
                                 <!-- Net Loss Diamond -->
@@ -1240,18 +1289,44 @@ export default {
                 .replace(/\b\w/g, (char) => char.toUpperCase()); // Capitalizes the first letter of each word
         };
 
-        // Helper function to calculate gold loss percentage
-        const calculateGoldLossPercentage = (productionGold, lossGold) => {
-            const total = (productionGold || 0) + (lossGold || 0);
+        // Helper function to calculate gold loss percentage using issued qty and loss qty
+        const calculateGoldLossPercentage = (issuedGold, lossGold) => {
+            const issued = issuedGold || 0;
+            const loss = lossGold || 0;
+            
+            // If no issued quantity but there is loss, calculate negative percentage
+            if (issued === 0) {
+                return loss > 0 ? -loss : 0;
+            }
+            
+            const total = issued + loss;
             if (total === 0) return 0;
-            return ((lossGold || 0) / total) * 100;
+            
+            // If loss > issued, return negative percentage
+            if (loss > issued) {
+                return -((loss - issued) / issued) * 100;
+            }
+            return (loss / total) * 100;
         };
 
-        // Helper function to calculate diamond loss percentage
-        const calculateDiamondLossPercentage = (productionDiamond, lossDiamond) => {
-            const total = (productionDiamond || 0) + (lossDiamond || 0);
+        // Helper function to calculate diamond loss percentage using issued qty and loss qty
+        const calculateDiamondLossPercentage = (issuedDiamond, lossDiamond) => {
+            const issued = issuedDiamond || 0;
+            const loss = lossDiamond || 0;
+            
+            // If no issued quantity but there is loss, calculate negative percentage
+            if (issued === 0) {
+                return loss > 0 ? -loss : 0;
+            }
+            
+            const total = issued + loss;
             if (total === 0) return 0;
-            return ((lossDiamond || 0) / total) * 100;
+            
+            // If loss > issued, return negative percentage
+            if (loss > issued) {
+                return -((loss - issued) / issued) * 100;
+            }
+            return (loss / total) * 100;
         };
 
         // Set default date range on mount
@@ -1571,44 +1646,189 @@ export default {
             return value ? parseFloat(value).toFixed(2) : "0.00";
         };
 
-        // Helper function to get category-level starting quantity
+        // Helper function to get raw numeric category-level starting quantity for Gold (for calculations)
+        const getCategoryStartingQtyGoldRaw = (dept, category) => {
+            if (!dept.category_qty_map) return 0;
+            const key = `${dept.id}_${category}`;
+            const data = dept.category_qty_map[key];
+            return data ? parseFloat(data.starting_qty_gold || 0) : 0;
+        };
+
+        // Helper function to get raw numeric category-level starting quantity for Diamond (for calculations)
+        const getCategoryStartingQtyDiamondRaw = (dept, category) => {
+            if (!dept.category_qty_map) return 0;
+            const key = `${dept.id}_${category}`;
+            const data = dept.category_qty_map[key];
+            return data ? parseFloat(data.starting_qty_diamond || 0) : 0;
+        };
+
+        // Helper function to get raw numeric category-level issued quantity for Gold (for calculations)
+        const getCategoryIssuedQtyGoldRaw = (dept, category) => {
+            if (!dept.category_qty_map) return 0;
+            const key = `${dept.id}_${category}`;
+            const data = dept.category_qty_map[key];
+            return data ? parseFloat(data.issued_qty_gold || 0) : 0;
+        };
+
+        // Helper function to get raw numeric category-level issued quantity for Diamond (for calculations)
+        const getCategoryIssuedQtyDiamondRaw = (dept, category) => {
+            if (!dept.category_qty_map) return 0;
+            const key = `${dept.id}_${category}`;
+            const data = dept.category_qty_map[key];
+            return data ? parseFloat(data.issued_qty_diamond || 0) : 0;
+        };
+
+        // Helper function to get raw numeric category-level loss quantity for Gold (for calculations)
+        const getCategoryLossQtyGoldRaw = (dept, category) => {
+            if (!dept.category_qty_map) return 0;
+            const key = `${dept.id}_${category}`;
+            const data = dept.category_qty_map[key];
+            return data ? parseFloat(data.loss_qty_gold || 0) : 0;
+        };
+
+        // Helper function to get raw numeric category-level loss quantity for Diamond (for calculations)
+        const getCategoryLossQtyDiamondRaw = (dept, category) => {
+            if (!dept.category_qty_map) return 0;
+            const key = `${dept.id}_${category}`;
+            const data = dept.category_qty_map[key];
+            return data ? parseFloat(data.loss_qty_diamond || 0) : 0;
+        };
+
+        // Helper function to get raw numeric category-level scrap quantity for Gold (for calculations)
+        const getCategoryScrapQtyGoldRaw = (dept, category) => {
+            if (!dept.category_qty_map) return 0;
+            const key = `${dept.id}_${category}`;
+            const data = dept.category_qty_map[key];
+            return data ? parseFloat(data.scrap_qty_gold || 0) : 0;
+        };
+
+        // Helper function to get raw numeric category-level scrap quantity for Diamond (for calculations)
+        const getCategoryScrapQtyDiamondRaw = (dept, category) => {
+            if (!dept.category_qty_map) return 0;
+            const key = `${dept.id}_${category}`;
+            const data = dept.category_qty_map[key];
+            return data ? parseFloat(data.scrap_qty_diamond || 0) : 0;
+        };
+
+        // Helper function to get raw numeric category-level balance quantity for Gold (for calculations)
+        const getCategoryBalanceQtyGoldRaw = (dept, category) => {
+            if (!dept.category_qty_map) return 0;
+            const key = `${dept.id}_${category}`;
+            const data = dept.category_qty_map[key];
+            return data ? parseFloat(data.balance_qty_gold || 0) : 0;
+        };
+
+        // Helper function to get raw numeric category-level balance quantity for Diamond (for calculations)
+        const getCategoryBalanceQtyDiamondRaw = (dept, category) => {
+            if (!dept.category_qty_map) return 0;
+            const key = `${dept.id}_${category}`;
+            const data = dept.category_qty_map[key];
+            return data ? parseFloat(data.balance_qty_diamond || 0) : 0;
+        };
+
+        // Helper function to get category-level starting quantity for Gold
+        const getCategoryStartingQtyGold = (dept, category) => {
+            if (!dept.category_qty_map) return '-';
+            const key = `${dept.id}_${category}`;
+            const data = dept.category_qty_map[key];
+            return data ? roundToTwo(data.starting_qty_gold) : '-';
+        };
+
+        // Helper function to get category-level starting quantity for Diamond
+        const getCategoryStartingQtyDiamond = (dept, category) => {
+            if (!dept.category_qty_map) return '-';
+            const key = `${dept.id}_${category}`;
+            const data = dept.category_qty_map[key];
+            return data ? roundToTwo(data.starting_qty_diamond) : '-';
+        };
+
+        // Generic wrapper for starting quantity (defaults to Gold)
         const getCategoryStartingQty = (dept, category) => {
+            return getCategoryStartingQtyGold(dept, category);
+        };
+
+        // Helper function to get category-level issued quantity for Gold
+        const getCategoryIssuedQtyGold = (dept, category) => {
             if (!dept.category_qty_map) return '-';
             const key = `${dept.id}_${category}`;
             const data = dept.category_qty_map[key];
-            return data ? roundToTwo(data.starting_qty) : '-';
+            return data ? roundToTwo(data.issued_qty_gold) : '-';
         };
 
-        // Helper function to get category-level issued quantity
+        // Helper function to get category-level issued quantity for Diamond
+        const getCategoryIssuedQtyDiamond = (dept, category) => {
+            if (!dept.category_qty_map) return '-';
+            const key = `${dept.id}_${category}`;
+            const data = dept.category_qty_map[key];
+            return data ? roundToTwo(data.issued_qty_diamond) : '-';
+        };
+
+        // Generic wrapper for issued quantity (defaults to Gold)
         const getCategoryIssuedQty = (dept, category) => {
+            return getCategoryIssuedQtyGold(dept, category);
+        };
+
+        // Helper function to get category-level loss quantity for Gold
+        const getCategoryLossQtyGold = (dept, category) => {
             if (!dept.category_qty_map) return '-';
             const key = `${dept.id}_${category}`;
             const data = dept.category_qty_map[key];
-            return data ? roundToTwo(data.issued_qty) : '-';
+            return data ? roundToTwo(data.loss_qty_gold) : '-';
         };
 
-        // Helper function to get category-level loss quantity
+        // Helper function to get category-level loss quantity for Diamond
+        const getCategoryLossQtyDiamond = (dept, category) => {
+            if (!dept.category_qty_map) return '-';
+            const key = `${dept.id}_${category}`;
+            const data = dept.category_qty_map[key];
+            return data ? roundToTwo(data.loss_qty_diamond) : '-';
+        };
+
+        // Generic wrapper for loss quantity (defaults to Gold)
         const getCategoryLossQty = (dept, category) => {
+            return getCategoryLossQtyGold(dept, category);
+        };
+
+        // Helper function to get category-level scrap quantity for Gold
+        const getCategoryScrapQtyGold = (dept, category) => {
             if (!dept.category_qty_map) return '-';
             const key = `${dept.id}_${category}`;
             const data = dept.category_qty_map[key];
-            return data ? roundToTwo(data.loss_qty) : '-';
+            return data ? roundToTwo(data.scrap_qty_gold) : '-';
         };
 
-        // Helper function to get category-level scrap quantity
+        // Helper function to get category-level scrap quantity for Diamond
+        const getCategoryScrapQtyDiamond = (dept, category) => {
+            if (!dept.category_qty_map) return '-';
+            const key = `${dept.id}_${category}`;
+            const data = dept.category_qty_map[key];
+            return data ? roundToTwo(data.scrap_qty_diamond) : '-';
+        };
+
+        // Generic wrapper for scrap quantity (defaults to Gold)
         const getCategoryScrapQty = (dept, category) => {
-            if (!dept.category_qty_map) return '-';
-            const key = `${dept.id}_${category}`;
-            const data = dept.category_qty_map[key];
-            return data ? roundToTwo(data.scrap_qty) : '-';
+            return getCategoryScrapQtyGold(dept, category);
         };
 
-        // Helper function to get category-level balance quantity
-        const getCategoryBalanceQty = (dept, category) => {
+        // Helper function to get category-level balance quantity for Gold
+        const getCategoryBalanceQtyGold = (dept, category) => {
             if (!dept.category_qty_map) return '-';
             const key = `${dept.id}_${category}`;
             const data = dept.category_qty_map[key];
-            return data ? roundToTwo(data.balance_qty) : '-';
+            return data ? roundToTwo(data.balance_qty_gold) : '-';
+        };
+
+        // Helper function to get category-level balance quantity for Diamond
+        const getCategoryBalanceQtyDiamond = (dept, category) => {
+            if (!dept.category_qty_map) return '-';
+            const key = `${dept.id}_${category}`;
+            const data = dept.category_qty_map[key];
+            return data ? roundToTwo(data.balance_qty_diamond) : '-';
+        };
+
+        // Generic wrapper for balance quantity (defaults to Gold)
+        const getCategoryBalanceQty = (dept, category) => {
+            return getCategoryBalanceQtyGold(dept, category);
         };
 
 
@@ -2509,10 +2729,30 @@ export default {
             formatName,
             roundToTwo,
             getCategoryStartingQty,
+            getCategoryStartingQtyGold,
+            getCategoryStartingQtyGoldRaw,
+            getCategoryStartingQtyDiamond,
+            getCategoryStartingQtyDiamondRaw,
             getCategoryIssuedQty,
+            getCategoryIssuedQtyGold,
+            getCategoryIssuedQtyGoldRaw,
+            getCategoryIssuedQtyDiamond,
+            getCategoryIssuedQtyDiamondRaw,
             getCategoryLossQty,
+            getCategoryLossQtyGold,
+            getCategoryLossQtyGoldRaw,
+            getCategoryLossQtyDiamond,
+            getCategoryLossQtyDiamondRaw,
             getCategoryScrapQty,
+            getCategoryScrapQtyGold,
+            getCategoryScrapQtyGoldRaw,
+            getCategoryScrapQtyDiamond,
+            getCategoryScrapQtyDiamondRaw,
             getCategoryBalanceQty,
+            getCategoryBalanceQtyGold,
+            getCategoryBalanceQtyGoldRaw,
+            getCategoryBalanceQtyDiamond,
+            getCategoryBalanceQtyDiamondRaw,
             totalDeptActualProductionGold,
             totalDeptGrossLossGold,
             totalDeptActualProductionDiamond,

@@ -8961,11 +8961,16 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                                 SELECT 
                                     BUILTIN_RESULT.TYPE_INTEGER(op.custrecord_jj_oprtns_department) AS department_id,
                                     BUILTIN_RESULT.TYPE_STRING(BUILTIN.DF(printdesign.custitem_jj_category)) AS category_name,
-                                    BUILTIN_RESULT.TYPE_FLOAT(SUM(NVL(dir.custrecord_jj_dir_starting_qty, 0))) AS starting_qty,
-                                    BUILTIN_RESULT.TYPE_FLOAT(SUM(NVL(dir.custrecord_jj_issued_quantity, 0))) AS issued_qty,
-                                    BUILTIN_RESULT.TYPE_FLOAT(SUM(NVL(dir.custrecord_jj_dir_loss_quantity, 0))) AS loss_qty,
-                                    BUILTIN_RESULT.TYPE_FLOAT(SUM(NVL(dir.custrecord_jj_scrap_quantity, 0))) AS scrap_qty,
-                                    BUILTIN_RESULT.TYPE_FLOAT(SUM(NVL(dir.custrecord_jj_additional_quantity, 0))) AS balance_qty
+                                    BUILTIN_RESULT.TYPE_FLOAT(SUM(CASE WHEN item.class IN (5, 22, 23, 24, 25) THEN NVL(dir.custrecord_jj_dir_starting_qty, 0) ELSE 0 END)) AS starting_qty_gold,
+                                    BUILTIN_RESULT.TYPE_FLOAT(SUM(CASE WHEN item.class = 6 THEN NVL(dir.custrecord_jj_dir_starting_qty, 0) ELSE 0 END)) AS starting_qty_diamond,
+                                    BUILTIN_RESULT.TYPE_FLOAT(SUM(CASE WHEN item.class IN (5, 22, 23, 24, 25) THEN NVL(dir.custrecord_jj_issued_quantity, 0) ELSE 0 END)) AS issued_qty_gold,
+                                    BUILTIN_RESULT.TYPE_FLOAT(SUM(CASE WHEN item.class = 6 THEN NVL(dir.custrecord_jj_issued_quantity, 0) ELSE 0 END)) AS issued_qty_diamond,
+                                    BUILTIN_RESULT.TYPE_FLOAT(SUM(CASE WHEN item.class IN (5, 22, 23, 24, 25) THEN NVL(dir.custrecord_jj_dir_loss_quantity, 0) ELSE 0 END)) AS loss_qty_gold,
+                                    BUILTIN_RESULT.TYPE_FLOAT(SUM(CASE WHEN item.class = 6 THEN NVL(dir.custrecord_jj_dir_loss_quantity, 0) ELSE 0 END)) AS loss_qty_diamond,
+                                    BUILTIN_RESULT.TYPE_FLOAT(SUM(CASE WHEN item.class IN (5, 22, 23, 24, 25) THEN NVL(dir.custrecord_jj_scrap_quantity, 0) ELSE 0 END)) AS scrap_qty_gold,
+                                    BUILTIN_RESULT.TYPE_FLOAT(SUM(CASE WHEN item.class = 6 THEN NVL(dir.custrecord_jj_scrap_quantity, 0) ELSE 0 END)) AS scrap_qty_diamond,
+                                    BUILTIN_RESULT.TYPE_FLOAT(SUM(CASE WHEN item.class IN (5, 22, 23, 24, 25) THEN NVL(dir.custrecord_jj_additional_quantity, 0) ELSE 0 END)) AS balance_qty_gold,
+                                    BUILTIN_RESULT.TYPE_FLOAT(SUM(CASE WHEN item.class = 6 THEN NVL(dir.custrecord_jj_additional_quantity, 0) ELSE 0 END)) AS balance_qty_diamond
                                 FROM CUSTOMRECORD_JJ_OPERATIONS op
                                 LEFT JOIN CUSTOMRECORD_JJ_DIRECT_ISSUE_RETURN dir
                                     ON dir.custrecord_jj_operations = op.ID
@@ -9007,20 +9012,25 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                             // Create maps for department-level and category-level data
                             const startingQtyMap = {}; // dept_id -> qty
                             const lossQtyMap = {}; // dept_id -> qty
-                            const categoryQtyMap = {}; // dept_id_category -> {starting_qty, issued_qty, loss_qty, scrap_qty, balance_qty}
+                            const categoryQtyMap = {}; // dept_id_category -> {starting_qty_gold, starting_qty_diamond, issued_qty_gold, issued_qty_diamond, loss_qty_gold, loss_qty_diamond, scrap_qty_gold, scrap_qty_diamond, balance_qty_gold, balance_qty_diamond}
                             
                             startingQtyResults.forEach(record => {
                                 const deptId = record.department_id;
                                 const category = record.category_name || 'N/A';
                                 const key = `${deptId}_${category}`;
                                 
-                                // Store category-level data
+                                // Store category-level data separated by class
                                 categoryQtyMap[key] = {
-                                    starting_qty: parseFloat(record.starting_qty || 0),
-                                    issued_qty: parseFloat(record.issued_qty || 0),
-                                    loss_qty: parseFloat(record.loss_qty || 0),
-                                    scrap_qty: parseFloat(record.scrap_qty || 0),
-                                    balance_qty: parseFloat(record.balance_qty || 0)
+                                    starting_qty_gold: parseFloat(record.starting_qty_gold || 0),
+                                    starting_qty_diamond: parseFloat(record.starting_qty_diamond || 0),
+                                    issued_qty_gold: parseFloat(record.issued_qty_gold || 0),
+                                    issued_qty_diamond: parseFloat(record.issued_qty_diamond || 0),
+                                    loss_qty_gold: parseFloat(record.loss_qty_gold || 0),
+                                    loss_qty_diamond: parseFloat(record.loss_qty_diamond || 0),
+                                    scrap_qty_gold: parseFloat(record.scrap_qty_gold || 0),
+                                    scrap_qty_diamond: parseFloat(record.scrap_qty_diamond || 0),
+                                    balance_qty_gold: parseFloat(record.balance_qty_gold || 0),
+                                    balance_qty_diamond: parseFloat(record.balance_qty_diamond || 0)
                                 };
                                 
                                 // Accumulate department-level totals
@@ -9028,17 +9038,17 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                                     startingQtyMap[deptId] = 0;
                                     lossQtyMap[deptId] = 0;
                                 }
-                                startingQtyMap[deptId] += parseFloat(record.starting_qty || 0);
-                                lossQtyMap[deptId] += parseFloat(record.loss_qty || 0);
+                                startingQtyMap[deptId] += parseFloat(record.starting_qty_gold || 0) + parseFloat(record.starting_qty_diamond || 0);
+                                lossQtyMap[deptId] += parseFloat(record.loss_qty_gold || 0) + parseFloat(record.loss_qty_diamond || 0);
                             });
                             
-                            // Log fetched quantities by category
-                            let startingQtyLog = "=== FETCHED QUANTITIES BY CATEGORY ===\n";
+                            // Log fetched quantities by category and class
+                            let startingQtyLog = "=== FETCHED QUANTITIES BY CATEGORY AND CLASS ===\n";
                             if (startingQtyResults.length === 0) {
                                 startingQtyLog += "No results found\n";
                             } else {
                                 startingQtyResults.forEach(record => {
-                                    startingQtyLog += `Dept ID ${record.department_id}, Category: ${record.category_name}: Starting=${record.starting_qty}, Issued=${record.issued_qty}, Loss=${record.loss_qty}, Scrap=${record.scrap_qty}, Balance=${record.balance_qty}\n`;
+                                    startingQtyLog += `Dept ID ${record.department_id}, Category: ${record.category_name}: Gold(Start=${record.starting_qty_gold}, Issued=${record.issued_qty_gold}, Loss=${record.loss_qty_gold}, Scrap=${record.scrap_qty_gold}, Balance=${record.balance_qty_gold}) | Diamond(Start=${record.starting_qty_diamond}, Issued=${record.issued_qty_diamond}, Loss=${record.loss_qty_diamond}, Scrap=${record.scrap_qty_diamond}, Balance=${record.balance_qty_diamond})\n`;
                                 });
                             }
                             startingQtyLog += "====================================";
